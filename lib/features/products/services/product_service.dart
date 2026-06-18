@@ -30,10 +30,6 @@ class ProductService {
     required int limit,
     required int skip,
   }) async {
-    bool hasConnection = await InternetConnection().hasInternetAccess;
-    if (!hasConnection) {
-      throw Exception("No Internet Connection. Device is offline.");
-    }
     try {
       final response = await _dio.get(
         'https://dummyjson.com/products',

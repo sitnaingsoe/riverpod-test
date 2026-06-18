@@ -61,9 +61,6 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
     final categoriesAsync = ref.watch(categoriesProvider);
     final paginationError = ref.watch(productErrorProvider);
 
-    // ✅ ပြင်ဆင်ချက် ၁ - Notifier ကို အကုန် watch မလုပ်တော့ဘဲ ပြောင်းလဲမှုကိုပဲ စောင့်ကြည့်ခြင်း
-    // အကယ်၍ သင့် Notifier State ထဲမှာ isLoadingMore ပါရင် .select((s) => s.isLoadingMore) လို့ သုံးနိုင်ပါတယ်။
-    // လက်ရှိ Notifier Class ထဲက ကိန်းရှင်ကို တိုက်ရိုက်ယူသုံးဖို့ အောက်ပါအတိုင်း Safe ဖြစ်အောင် ရေးပါ-
     final isLoadMore = ref.watch(productsProvider).isLoading
         ? false
         : ref.read(productsProvider.notifier).isLoadingMore;

@@ -1,8 +1,15 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
-import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'package:riverpod_test/features/products/models/product_model.dart';
 import '../services/product_service.dart';
+
+// 🌐 ၁။ Network အခြေအနေကို Live စောင့်ကြည့်ပေးမည့် Provider ကို ထည့်သွင်းပါ
+final connectivityStreamProvider = StreamProvider<List<ConnectivityResult>>((
+  ref,
+) {
+  return Connectivity().onConnectivityChanged;
+});
 
 class ProductNotifier extends AsyncNotifier<List<ProductModel>> {
   final _productsBox = Hive.box<ProductModel>('products_box');
@@ -20,25 +27,23 @@ class ProductNotifier extends AsyncNotifier<List<ProductModel>> {
     final searchQuery = ref.watch(productSearchQueryProvider);
     final selectedCategory = ref.watch(selectedCategoryProvider);
 
+    final connectivityAsync = ref.watch(connectivityStreamProvider);
+    final hasConnection =
+        connectivityAsync.value?.any(
+          (result) =>
+              result == ConnectivityResult.wifi ||
+              result == ConnectivityResult.mobile,
+        ) ??
+        true;
+
     _skip = 0;
     _hasMoreData = true;
     _allProducts.clear();
 
     final service = ProductService();
-    bool hasConnection = await InternetConnection().hasInternetAccess;
 
     try {
       if (searchQuery.isNotEmpty) {
-        if (!hasConnection) {
-          _allProducts = _productsBox.values
-              .where(
-                (p) =>
-                    p.title.toLowerCase().contains(searchQuery.toLowerCase()),
-              )
-              .toList();
-          _hasMoreData = false;
-          return _allProducts;
-        }
         _allProducts = await service.searchProducts(searchQuery);
         _hasMoreData = false;
         return _allProducts;
@@ -90,7 +95,6 @@ class ProductNotifier extends AsyncNotifier<List<ProductModel>> {
     final searchQuery = ref.read(productSearchQueryProvider);
     final selectedCategory = ref.read(selectedCategoryProvider);
 
-    // ရှာဖွေနေချိန် သို့မဟုတ် Category ရွေးထားချိန်ဆိုရင် ထပ်မခေါ်ပါနဲ့
     if (searchQuery.isNotEmpty || selectedCategory != 'all') return;
 
     if (_isLoadingMore ||
@@ -99,7 +103,15 @@ class ProductNotifier extends AsyncNotifier<List<ProductModel>> {
       return;
     }
 
-    bool hasConnection = await InternetConnection().hasInternetAccess;
+    final connectivityAsync = ref.read(connectivityStreamProvider);
+    final hasConnection =
+        connectivityAsync.value?.any(
+          (result) =>
+              result == ConnectivityResult.wifi ||
+              result == ConnectivityResult.mobile,
+        ) ??
+        false;
+
     if (!hasConnection) {
       ref.read(productErrorProvider.notifier).state =
           'Device is offline. Cannot load more.';
@@ -109,7 +121,6 @@ class ProductNotifier extends AsyncNotifier<List<ProductModel>> {
     _isLoadingMore = true;
     ref.read(productErrorProvider.notifier).state = null;
 
-    // အောက်ခြေမှာ Loading indicator ပေါ်လာအောင် UI ကို state တစ်ချက် update လုပ်ပေးခြင်း
     state = AsyncData([..._allProducts]);
     _skip += _limit;
 
@@ -138,9 +149,6 @@ class ProductNotifier extends AsyncNotifier<List<ProductModel>> {
       }
 
       ref.read(productErrorProvider.notifier).state = 'No Internet Connection.';
-
-      // 💡 ပြင်ဆင်ချက်- AsyncError မပြောင်းတော့ဘဲ ရှိပြီးသား data ကိုပဲ ဆက်ပြထားပါမယ်။
-      // ဒါမှ UI တစ်ခုလုံး ပျောက်မသွားမှာ ဖြစ်ပါတယ်။
       state = AsyncData([..._allProducts]);
     }
   }
