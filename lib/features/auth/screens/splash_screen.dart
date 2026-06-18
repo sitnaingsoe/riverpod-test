@@ -1,7 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_test/features/auth/providers/auth_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -33,7 +35,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
   @override
   void dispose() {
-    _animationController.dispose(); // Memory leak မဖြစ်အောင် ပိတ်ပေးရပါမယ်
+    _animationController.dispose();
     super.dispose();
   }
 
@@ -41,26 +43,17 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     await Future.delayed(const Duration(seconds: 3));
     if (!mounted || !context.mounted) return;
 
-    try {
-      final authUser = await ref.read(authProvider.future);
+    final prefs = await SharedPreferences.getInstance();
 
-      if (!mounted || !context.mounted) return;
+    final accessToken = prefs.getString("accessToken");
+    if (kDebugMode) {
+      print('authuser -----------------------$accessToken');
+    }
+    if (!mounted || !context.mounted) return;
 
-      if (authUser != null) {
-        context.go('/home');
-      } else {
-        context.go('/login');
-      }
-    } catch (e) {
-      if (!mounted || !context.mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Offline mode: Redirecting to login...'),
-          duration: Duration(seconds: 2),
-        ),
-      );
-
+    if (accessToken != null) {
+      context.go('/home');
+    } else {
       context.go('/login');
     }
   }

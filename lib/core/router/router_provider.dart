@@ -6,7 +6,6 @@ import 'package:riverpod_test/features/auth/screens/login.dart';
 import 'package:riverpod_test/features/auth/screens/splash_screen.dart';
 import 'package:riverpod_test/features/products/screens/product_detail_screen.dart';
 
-// router_provider.dart သို့မဟုတ် မင်းရဲ့ GoRouter ဖိုင်ထဲတွင် ပြင်ရန်-
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(

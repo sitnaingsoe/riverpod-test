@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:riverpod_test/core/router/router_provider.dart';
+import 'package:riverpod_test/features/products/models/product_model.dart'; // 👈 မင်းရဲ့ Model လမ်းကြောင်း
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Hive.initFlutter();
+  Hive.registerAdapter(ProductModelAdapter());
+  await Hive.openBox<ProductModel>('products_box');
   runApp(const ProviderScope(child: MyApp()));
 }
 

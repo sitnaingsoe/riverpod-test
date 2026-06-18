@@ -2,9 +2,7 @@ import 'package:hive/hive.dart';
 
 part 'product_model.g.dart';
 
-@HiveType(
-  typeId: 0,
-) // 
+@HiveType(typeId: 0)
 class ProductModel {
   @HiveField(0)
   final int id;

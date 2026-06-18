@@ -7,13 +7,7 @@ import 'package:riverpod_test/features/products/models/product_model.dart';
 class ProductService {
   final Dio _dio;
 
-  ProductService()
-    : _dio = Dio(
-        BaseOptions(
-          connectTimeout: const Duration(seconds: 5),
-          receiveTimeout: const Duration(seconds: 5),
-        ),
-      ) {
+  ProductService() : _dio = Dio() {
     _dio.interceptors.add(
       PrettyDioLogger(
         requestHeader: true,
