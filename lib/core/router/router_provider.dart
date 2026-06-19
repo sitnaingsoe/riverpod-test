@@ -1,11 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:riverpod_test/features/navigation/screens/bottom_navigation_screen.dart';
 import 'package:riverpod_test/features/products/models/product_model.dart';
-import 'package:riverpod_test/features/products/screens/product_screen.dart';
 import 'package:riverpod_test/features/auth/screens/login.dart';
 import 'package:riverpod_test/features/auth/screens/splash_screen.dart';
 import 'package:riverpod_test/features/products/screens/product_detail_screen.dart';
-
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -18,7 +17,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
       GoRoute(
         path: '/home',
-        builder: (context, state) => const ProductsScreen(),
+        builder: (context, state) => const BottomNavigationScreen(),
       ),
       GoRoute(
         path: '/product-detail',

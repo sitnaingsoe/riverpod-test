@@ -27,8 +27,6 @@ class ProductNotifier extends AsyncNotifier<List<ProductModel>> {
     final searchQuery = ref.watch(productSearchQueryProvider);
     final selectedCategory = ref.watch(selectedCategoryProvider);
 
-    // ❌ ref.watch(connectivityStreamProvider) ကို ဒီနေရာမှ ဖယ်ထုတ်လိုက်ပါသည်
-    // 💡 အစားထိုးချက်- build() ခေါ်ချိန်တွင် device အင်တာနက် ရှိမရှိ တစ်ခါတည်း check ခြင်း
     final connectivityResult = await Connectivity().checkConnectivity();
     final hasConnection = connectivityResult.any(
       (result) =>
@@ -98,7 +96,6 @@ class ProductNotifier extends AsyncNotifier<List<ProductModel>> {
     if (searchQuery.isNotEmpty || selectedCategory != 'all') return;
 
     if (_isLoadingMore || !_hasMoreData) return;
-    // 💡 အင်တာနက်ပြန်ချိတ်ရင် paginationError က ရှိနေဦးမှာမို့ paginationError != null condition ကို ဖယ်ပေးရပါမယ်
 
     final connectivityResult = await Connectivity().checkConnectivity();
     final hasConnection = connectivityResult.any(
@@ -147,7 +144,6 @@ class ProductNotifier extends AsyncNotifier<List<ProductModel>> {
   }
 }
 
-// (Providers များနှင့် categoriesProvider ကုဒ်များကို လက်ရှိအတိုင်း ထားနိုင်ပါသည်)
 final productSearchQueryProvider = StateProvider<String>((ref) => '');
 final selectedCategoryProvider = StateProvider<String>((ref) => 'all');
 final productErrorProvider = StateProvider<String?>((ref) => null);
@@ -171,3 +167,5 @@ final categoriesProvider = FutureProvider<List<Map<String, String>>>((
     ];
   }
 });
+
+final bottomNavIndexProvider = StateProvider<int>((ref) => 0);

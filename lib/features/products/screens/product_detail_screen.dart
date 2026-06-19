@@ -1,4 +1,4 @@
-
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:riverpod_test/features/products/models/product_model.dart';
 
@@ -30,16 +30,34 @@ class ProductDetailScreen extends StatelessWidget {
               children: [
                 // ၁။ Product Image Box
                 Container(
-                  height: 320,
                   width: double.infinity,
-                  color: Colors.grey[50],
-                  padding: const EdgeInsets.all(16),
-                  child: Hero(
-                    tag:
-                        'product-image-${product.id}', // 💡 ရွေးချယ်နိုင်သည်- ဖွင့်ရင် လှပတဲ့ Animation ပေါ်ချင်ရင် သုံးနိုင်ပါတယ်
-                    child: Image.network(
-                      product.thumbnail,
-                      fit: BoxFit.contain,
+                  height: 300,
+                  color: Colors.grey[100],
+                  child: CachedNetworkImage(
+                    imageUrl: product.thumbnail.isNotEmpty
+                        ? product.thumbnail
+                        : "https://via.placeholder.com/300",
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) => const Center(
+                      child: CircularProgressIndicator(color: Colors.teal),
+                    ),
+                    errorWidget: (context, url, error) => Container(
+                      color: Colors.grey[200],
+                      child: const Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.signal_wifi_off_rounded,
+                            color: Colors.grey,
+                            size: 48,
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            'Offline Mode: Image Unavailable',
+                            style: TextStyle(color: Colors.grey, fontSize: 14),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
