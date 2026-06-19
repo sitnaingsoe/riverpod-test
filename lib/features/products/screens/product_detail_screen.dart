@@ -1,14 +1,17 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_test/features/cart/providers/cart_provider.dart';
 import 'package:riverpod_test/features/products/models/product_model.dart';
 
-class ProductDetailScreen extends StatelessWidget {
+class ProductDetailScreen extends ConsumerWidget {
   final ProductModel product;
 
   const ProductDetailScreen({super.key, required this.product});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final cartNotifier = ref.read(cartProvider.notifier);
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -227,6 +230,7 @@ class ProductDetailScreen extends StatelessWidget {
                         ),
                         onPressed: () {
                           // 💡 ဤနေရာတွင် မင်းရဲ့ CartProvider ကို လှမ်းခေါ်ပြီး ပစ္စည်းထည့်ခိုင်းပါမယ်
+                          cartNotifier.addToCart(product);
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text('${product.title} added to cart!'),

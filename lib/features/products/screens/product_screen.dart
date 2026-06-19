@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_test/features/auth/providers/auth_provider.dart';
+import 'package:riverpod_test/features/cart/providers/cart_provider.dart';
 import 'package:riverpod_test/features/products/models/product_model.dart';
 import 'package:riverpod_test/features/products/providers/product_provider.dart';
 import 'dart:async';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:riverpod_test/features/products/widgets/product_skeleton.dart';
 
 class ProductsScreen extends ConsumerStatefulWidget {
   const ProductsScreen({super.key});
@@ -81,9 +83,6 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
           if (hasConnection && paginationError != null) {
             ref.read(productErrorProvider.notifier).state =
                 null; // Error Panel ပိတ်မည်
-            ref
-                .read(productsProvider.notifier)
-                .loadMoreProducts(); // Auto Retry လုပ်မည်
           }
         }
       },
@@ -131,8 +130,6 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
       ),
       body: Column(
         children: [
-          // 💡 Search, Categories နှင့် Grid အပိုင်းများ အားလုံး သင့်ရဲ့ မူလ code အတိုင်း ထည့်ပေးပါ။
-          // (နေရာမစားစေရန် ဤနေရာတွင် ချုံ့ထားပါသည်)
           Padding(
             padding: const EdgeInsets.all(12.0),
             child: TextField(
@@ -173,16 +170,7 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
           SizedBox(
             height: 40,
             child: categoriesAsync.when(
-              loading: () => const Center(
-                child: SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.teal,
-                  ),
-                ),
-              ),
+              loading: () => const CategorySkeleton(),
               error: (err, stack) => const Padding(
                 padding: EdgeInsets.only(left: 12),
                 child: Text('Error loading categories'),
@@ -227,9 +215,7 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
 
           Expanded(
             child: productsAsync.when(
-              loading: () => const Center(
-                child: CircularProgressIndicator(color: Colors.teal),
-              ),
+              loading: () => const ProductGridSkeleton(),
               error: (err, stack) => Center(child: Text('Error: $err')),
               data: (products) {
                 if (products.isEmpty) {
@@ -408,6 +394,9 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
                                           ),
                                         ),
                                         onPressed: () {
+                                          ref
+                                              .read(cartProvider.notifier)
+                                              .addToCart(product);
                                           ScaffoldMessenger.of(
                                             context,
                                           ).showSnackBar(
@@ -415,6 +404,7 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
                                               content: Text(
                                                 '${product.title} added to cart!',
                                               ),
+                                              backgroundColor: Colors.teal,
                                               duration: const Duration(
                                                 seconds: 1,
                                               ),
