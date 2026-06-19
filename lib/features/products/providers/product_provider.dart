@@ -4,7 +4,7 @@ import 'package:hive/hive.dart';
 import 'package:riverpod_test/features/products/models/product_model.dart';
 import '../services/product_service.dart';
 
-// Connectivity Stream Provider ကို screen ကနေ watch ရန် ဒီအတိုင်း ထားခဲ့ပါမည်
+// Connectivity Stream Provider
 final connectivityStreamProvider = StreamProvider<List<ConnectivityResult>>((
   ref,
 ) {
@@ -38,15 +38,19 @@ class ProductNotifier extends AsyncNotifier<List<ProductModel>> {
     _hasMoreData = true;
     _allProducts.clear();
 
+    ref.read(productErrorProvider.notifier).state = null;
+
     final service = ProductService();
 
     try {
+      // ၁။ Search Logic
       if (searchQuery.isNotEmpty) {
         _allProducts = await service.searchProducts(searchQuery);
         _hasMoreData = false;
         return _allProducts;
       }
 
+      // ၂။ Category Logic
       if (selectedCategory != 'all') {
         if (!hasConnection) {
           _allProducts = _productsBox.values
@@ -68,14 +72,16 @@ class ProductNotifier extends AsyncNotifier<List<ProductModel>> {
         _hasMoreData = _allProducts.length >= _limit;
         return _allProducts;
       }
-
       final initialProducts = await service.fetchProducts(
         limit: _limit,
         skip: _skip,
       );
+
       _allProducts.addAll(initialProducts);
+
       await _productsBox.clear();
       await _productsBox.addAll(initialProducts);
+
       if (initialProducts.length < _limit) {
         _hasMoreData = false;
       }
@@ -84,8 +90,14 @@ class ProductNotifier extends AsyncNotifier<List<ProductModel>> {
     } catch (e) {
       _isLoadingMore = false;
       ref.read(productErrorProvider.notifier).state = 'Failed to sync data.';
-      _allProducts = _productsBox.values.toList();
-      return _allProducts;
+
+      if (_productsBox.isNotEmpty) {
+        _allProducts = _productsBox.values.toList();
+        return _allProducts;
+      }
+
+      update((_) => throw e);
+      return [];
     }
   }
 
@@ -94,7 +106,6 @@ class ProductNotifier extends AsyncNotifier<List<ProductModel>> {
     final selectedCategory = ref.read(selectedCategoryProvider);
 
     if (searchQuery.isNotEmpty || selectedCategory != 'all') return;
-
     if (_isLoadingMore || !_hasMoreData) return;
 
     final connectivityResult = await Connectivity().checkConnectivity();
@@ -133,7 +144,6 @@ class ProductNotifier extends AsyncNotifier<List<ProductModel>> {
 
       _isLoadingMore = false;
       state = AsyncData([..._allProducts]);
-      ref.read(productErrorProvider.notifier).state = null;
     } catch (e) {
       _isLoadingMore = false;
       if (_skip >= _limit) _skip -= _limit;
@@ -147,10 +157,12 @@ class ProductNotifier extends AsyncNotifier<List<ProductModel>> {
 final productSearchQueryProvider = StateProvider<String>((ref) => '');
 final selectedCategoryProvider = StateProvider<String>((ref) => 'all');
 final productErrorProvider = StateProvider<String?>((ref) => null);
+
 final productsProvider =
     AsyncNotifierProvider<ProductNotifier, List<ProductModel>>(
       ProductNotifier.new,
     );
+
 final categoriesProvider = FutureProvider<List<Map<String, String>>>((
   ref,
 ) async {

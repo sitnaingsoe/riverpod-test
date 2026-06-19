@@ -1,17 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart'; // 💡 ဖြေရှင်းချက် (၁) - Package ကို Import လုပ်ပါ
+import 'package:riverpod_test/features/cart/providers/cart_provider.dart';
 import 'package:riverpod_test/features/products/models/product_model.dart';
 
-class ProductGridItem extends StatelessWidget {
+class ProductGridItem extends ConsumerWidget {
   final ProductModel product;
 
   const ProductGridItem({super.key, required this.product});
 
   @override
-  Widget build(BuildContext context) {
-    return 
-    Card(
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isInCart = ref
+        .watch(cartProvider)
+        .any((item) => item.product.id == product.id);
+    return Card(
       clipBehavior: Clip.antiAlias,
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -168,24 +172,53 @@ class ProductGridItem extends StatelessWidget {
                             borderRadius: BorderRadius.circular(8),
                           ),
                         ),
-                        icon: const Icon(
-                          Icons.shopping_cart_outlined,
+                        icon: Icon(
+                          isInCart
+                              ? Icons.remove_shopping_cart_outlined
+                              : Icons.shopping_cart_outlined,
                           size: 16,
                         ),
-                        label: const Text(
-                          'Add to Cart',
-                          style: TextStyle(
+                        label: Text(
+                          isInCart ? 'Remove from Cart' : 'Add to Cart',
+                          style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('${product.title} added to cart!'),
-                              duration: const Duration(seconds: 1),
-                            ),
-                          );
+                          if (isInCart) {
+                            ref
+                                .read(cartProvider.notifier)
+                                .removeFromCart(
+                                  product.id,
+                                ); // သို့မဟုတ် product
+
+                            ScaffoldMessenger.of(
+                              context,
+                            ).clearSnackBars(); // ယခင် SnackBar ကို ဖျက်ရန်
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  '${product.title} removed from cart!',
+                                ),
+                                backgroundColor: Colors.red.shade700,
+                                duration: const Duration(seconds: 1),
+                              ),
+                            );
+                          } else {
+                            ref.read(cartProvider.notifier).addToCart(product);
+
+                            ScaffoldMessenger.of(context).clearSnackBars();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  '${product.title} added to cart!',
+                                ),
+                                backgroundColor: Colors.teal,
+                                duration: const Duration(seconds: 1),
+                              ),
+                            );
+                          }
                         },
                       ),
                     ),
