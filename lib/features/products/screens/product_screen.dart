@@ -7,6 +7,8 @@ import 'package:riverpod_test/features/products/models/product_model.dart';
 import 'package:riverpod_test/features/products/providers/product_provider.dart';
 import 'dart:async';
 
+import 'package:connectivity_plus/connectivity_plus.dart';
+
 class ProductsScreen extends ConsumerStatefulWidget {
   const ProductsScreen({super.key});
 
@@ -25,7 +27,6 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
   }
 
   void _onScroll() {
-    // Scroll Event ထဲမှာ ref.read ကိုပဲ သုံးထားတာ မှန်ကန်ပါတယ်။
     final currentSearch = ref.read(productSearchQueryProvider);
     final currentCategory = ref.read(selectedCategoryProvider);
     final paginationError = ref.read(productErrorProvider);
@@ -35,7 +36,6 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
         _scrollController.position.maxScrollExtent - 200) {
       if (currentSearch.isNotEmpty || currentCategory != 'all') return;
 
-      // Safe check ကို ပိုမိုသေချာအောင် လုပ်ခြင်း
       if (notifier.isLoadingMore ||
           paginationError != null ||
           !notifier.hasMoreData) {
@@ -65,7 +65,31 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
         ? false
         : ref.read(productsProvider.notifier).isLoadingMore;
 
-    // SnackBar Listener
+    // 💡 အဓိကပြင်ဆင်ချက်- အင်တာနက် အခြေအနေပြောင်းလဲမှုကို နားထောင်ခြင်း
+    ref.listen<AsyncValue<List<ConnectivityResult>>>(
+      connectivityStreamProvider,
+      (previous, next) {
+        if (next.hasValue) {
+          final results = next.value!;
+          final hasConnection = results.any(
+            (result) =>
+                result == ConnectivityResult.wifi ||
+                result == ConnectivityResult.mobile,
+          );
+
+          // အင်တာနက် ပြန်ပွင့်လာပြီး လက်ရှိ screen မှာ error ပြနေလျှင်
+          if (hasConnection && paginationError != null) {
+            ref.read(productErrorProvider.notifier).state =
+                null; // Error Panel ပိတ်မည်
+            ref
+                .read(productsProvider.notifier)
+                .loadMoreProducts(); // Auto Retry လုပ်မည်
+          }
+        }
+      },
+    );
+
+    // SnackBar Listener (မူလအတိုင်း ထားပါသည်)
     ref.listen<AsyncValue<List<ProductModel>>>(productsProvider, (
       previous,
       next,
@@ -107,7 +131,8 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
       ),
       body: Column(
         children: [
-          // Search TextField Part
+          // 💡 Search, Categories နှင့် Grid အပိုင်းများ အားလုံး သင့်ရဲ့ မူလ code အတိုင်း ထည့်ပေးပါ။
+          // (နေရာမစားစေရန် ဤနေရာတွင် ချုံ့ထားပါသည်)
           Padding(
             padding: const EdgeInsets.all(12.0),
             child: TextField(
@@ -145,7 +170,6 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
             ),
           ),
 
-          // Categories List Part
           SizedBox(
             height: 40,
             child: categoriesAsync.when(
@@ -182,7 +206,6 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
                         selectedColor: Colors.teal,
                         labelStyle: TextStyle(
                           color: isSelected ? Colors.white : Colors.black87,
-                          // ✅ ပြင်ဆင်ချက် ၂ - FontWeight(20) ကို FontWeight.normal ပြောင်းလဲခြင်း
                           fontWeight: isSelected
                               ? FontWeight.bold
                               : FontWeight.normal,
@@ -202,7 +225,6 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
           ),
           const SizedBox(height: 10),
 
-          // Products Grid Part
           Expanded(
             child: productsAsync.when(
               loading: () => const Center(
@@ -213,7 +235,6 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
                 if (products.isEmpty) {
                   return const Center(child: Text('No products available.'));
                 }
-
                 return GridView.builder(
                   controller: _scrollController,
                   padding: const EdgeInsets.all(10),
@@ -233,9 +254,8 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: InkWell(
-                        onTap: () {
-                          context.push('/product-detail', extra: product);
-                        },
+                        onTap: () =>
+                            context.push('/product-detail', extra: product),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -282,10 +302,12 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
                                     right: 8,
                                     child: Container(
                                       decoration: BoxDecoration(
+                                        // ignore: deprecated_member_use
                                         color: Colors.white.withOpacity(0.9),
                                         shape: BoxShape.circle,
                                         boxShadow: [
                                           BoxShadow(
+                                            // ignore: deprecated_member_use
                                             color: Colors.black.withOpacity(
                                               0.1,
                                             ),

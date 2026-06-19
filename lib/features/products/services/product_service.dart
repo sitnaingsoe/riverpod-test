@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart'; // 💡 compute သုံးရန် ထည့်သွင်းပါ
 import 'package:dio/dio.dart';
-import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 import 'package:riverpod_test/features/products/models/product_model.dart';
 

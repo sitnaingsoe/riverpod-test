@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:riverpod_test/core/router/router_provider.dart';
-import 'package:riverpod_test/features/products/models/product_model.dart'; // 👈 မင်းရဲ့ Model လမ်းကြောင်း
+import 'package:riverpod_test/features/products/models/product_model.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

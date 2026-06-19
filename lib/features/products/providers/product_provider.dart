@@ -4,7 +4,7 @@ import 'package:hive/hive.dart';
 import 'package:riverpod_test/features/products/models/product_model.dart';
 import '../services/product_service.dart';
 
-// 🌐 ၁။ Network အခြေအနေကို Live စောင့်ကြည့်ပေးမည့် Provider ကို ထည့်သွင်းပါ
+// Connectivity Stream Provider ကို screen ကနေ watch ရန် ဒီအတိုင်း ထားခဲ့ပါမည်
 final connectivityStreamProvider = StreamProvider<List<ConnectivityResult>>((
   ref,
 ) {
@@ -27,14 +27,14 @@ class ProductNotifier extends AsyncNotifier<List<ProductModel>> {
     final searchQuery = ref.watch(productSearchQueryProvider);
     final selectedCategory = ref.watch(selectedCategoryProvider);
 
-    final connectivityAsync = ref.watch(connectivityStreamProvider);
-    final hasConnection =
-        connectivityAsync.value?.any(
-          (result) =>
-              result == ConnectivityResult.wifi ||
-              result == ConnectivityResult.mobile,
-        ) ??
-        true;
+    // ❌ ref.watch(connectivityStreamProvider) ကို ဒီနေရာမှ ဖယ်ထုတ်လိုက်ပါသည်
+    // 💡 အစားထိုးချက်- build() ခေါ်ချိန်တွင် device အင်တာနက် ရှိမရှိ တစ်ခါတည်း check ခြင်း
+    final connectivityResult = await Connectivity().checkConnectivity();
+    final hasConnection = connectivityResult.any(
+      (result) =>
+          result == ConnectivityResult.wifi ||
+          result == ConnectivityResult.mobile,
+    );
 
     _skip = 0;
     _hasMoreData = true;
@@ -97,20 +97,15 @@ class ProductNotifier extends AsyncNotifier<List<ProductModel>> {
 
     if (searchQuery.isNotEmpty || selectedCategory != 'all') return;
 
-    if (_isLoadingMore ||
-        !_hasMoreData ||
-        ref.read(productErrorProvider) != null) {
-      return;
-    }
+    if (_isLoadingMore || !_hasMoreData) return;
+    // 💡 အင်တာနက်ပြန်ချိတ်ရင် paginationError က ရှိနေဦးမှာမို့ paginationError != null condition ကို ဖယ်ပေးရပါမယ်
 
-    final connectivityAsync = ref.read(connectivityStreamProvider);
-    final hasConnection =
-        connectivityAsync.value?.any(
-          (result) =>
-              result == ConnectivityResult.wifi ||
-              result == ConnectivityResult.mobile,
-        ) ??
-        false;
+    final connectivityResult = await Connectivity().checkConnectivity();
+    final hasConnection = connectivityResult.any(
+      (result) =>
+          result == ConnectivityResult.wifi ||
+          result == ConnectivityResult.mobile,
+    );
 
     if (!hasConnection) {
       ref.read(productErrorProvider.notifier).state =
@@ -141,12 +136,10 @@ class ProductNotifier extends AsyncNotifier<List<ProductModel>> {
 
       _isLoadingMore = false;
       state = AsyncData([..._allProducts]);
+      ref.read(productErrorProvider.notifier).state = null;
     } catch (e) {
       _isLoadingMore = false;
-
-      if (_skip >= _limit) {
-        _skip -= _limit;
-      }
+      if (_skip >= _limit) _skip -= _limit;
 
       ref.read(productErrorProvider.notifier).state = 'No Internet Connection.';
       state = AsyncData([..._allProducts]);
@@ -154,7 +147,7 @@ class ProductNotifier extends AsyncNotifier<List<ProductModel>> {
   }
 }
 
-// Providers
+// (Providers များနှင့် categoriesProvider ကုဒ်များကို လက်ရှိအတိုင်း ထားနိုင်ပါသည်)
 final productSearchQueryProvider = StateProvider<String>((ref) => '');
 final selectedCategoryProvider = StateProvider<String>((ref) => 'all');
 final productErrorProvider = StateProvider<String?>((ref) => null);
@@ -162,7 +155,6 @@ final productsProvider =
     AsyncNotifierProvider<ProductNotifier, List<ProductModel>>(
       ProductNotifier.new,
     );
-
 final categoriesProvider = FutureProvider<List<Map<String, String>>>((
   ref,
 ) async {
