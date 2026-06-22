@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_test/features/cart/providers/cart_provider.dart';
+import 'package:riverpod_test/features/orders/providers/orders_provider.dart';
 
 class CartScreen extends ConsumerWidget {
   const CartScreen({super.key});
@@ -88,10 +89,7 @@ class CartScreen extends ConsumerWidget {
                               ),
                               IconButton(
                                 onPressed: () {
-                                  cartNotifier.removeFromCart(
-                                    item.product.id,
-                                    
-                                  );
+                                  cartNotifier.removeFromCart(item.product.id);
                                 },
                                 icon: const Icon(
                                   Icons.delete_outline,
@@ -148,7 +146,35 @@ class CartScreen extends ConsumerWidget {
                             vertical: 12,
                           ),
                         ),
-                        onPressed: () {},
+                        onPressed: cartItems.isEmpty
+                            ? null // Cart အလွတ်ဖြစ်နေရင် နှိပ်လို့မရအောင် ပိတ်ထားမယ်
+                            : () {
+                                ref
+                                    .read(ordersProvider.notifier)
+                                    .placeOrder(
+                                      cartItems,
+                                      ref
+                                          .read(cartProvider.notifier)
+                                          .totalPrice,
+                                      "No.123, Mahabandoola Road, Yangon",
+                                    );
+
+                                showDialog(
+                                  context: context,
+                                  builder: (ctx) => AlertDialog(
+                                    title: const Text('Success!'),
+                                    content: const Text(
+                                      'Your order has been placed successfully.',
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(ctx),
+                                        child: const Text('OK'),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
                         child: const Text(
                           'Checkout',
                           style: TextStyle(fontWeight: FontWeight.bold),

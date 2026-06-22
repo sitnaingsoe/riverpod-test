@@ -38,6 +38,10 @@ class CartNotifier extends StateNotifier<List<CartItemModel>> {
     ];
   }
 
+  void clearCart() {
+    state = [];
+  }
+
   double get totalPrice {
     return state.fold(
       0.0,

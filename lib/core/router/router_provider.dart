@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:riverpod_test/features/auth/providers/auth_provider.dart';
 import 'package:riverpod_test/features/favorites/screens/favorites_screen.dart';
 import 'package:riverpod_test/features/navigation/screens/bottom_navigation_screen.dart';
+import 'package:riverpod_test/features/orders/screens/orders_history_screen.dart';
 import 'package:riverpod_test/features/products/models/product_model.dart';
 import 'package:riverpod_test/features/auth/screens/login.dart';
 import 'package:riverpod_test/features/auth/screens/splash_screen.dart';
@@ -42,6 +43,12 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/favorites',
         builder: (context, state) {
           return FavoritesScreen();
+        },
+      ),
+      GoRoute(
+        path: '/orders',
+        builder: (context, state) {
+          return OrdersHistoryScreen();
         },
       ),
       GoRoute(

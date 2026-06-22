@@ -144,7 +144,7 @@ class ProfileScreen extends ConsumerWidget {
                         Icons.shopping_cart,
                         "Orders",
                         Colors.blue,
-                        () => Navigator.pushNamed(context, "/orders"),
+                        () => context.push("/orders"),
                       ),
                       buildGridItem(
                         Icons.payment,
