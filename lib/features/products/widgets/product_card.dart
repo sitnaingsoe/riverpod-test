@@ -8,7 +8,6 @@ import 'package:riverpod_test/features/products/models/product_model.dart';
 
 class ProductGridItem extends ConsumerWidget {
   final ProductModel product;
-
   const ProductGridItem({super.key, required this.product});
 
   @override
@@ -25,6 +24,7 @@ class ProductGridItem extends ConsumerWidget {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: InkWell(
         onTap: () {
+          FocusManager.instance.primaryFocus?.unfocus();
           context.push('/product-detail', extra: product);
         },
         child: Column(

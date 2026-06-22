@@ -4,7 +4,6 @@ import 'package:riverpod_test/features/favorites/providers/favorites_provider.da
 import 'package:riverpod_test/features/products/widgets/product_card.dart'; // 💡 သင့် product_card လမ်းကြောင်း (ပုံထဲတွင် product_card.dart ဟု တွေ့ရပါသည်)
 
 class FavoritesScreen extends ConsumerWidget {
-  
   const FavoritesScreen({super.key});
 
   @override
