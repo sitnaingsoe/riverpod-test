@@ -13,8 +13,13 @@ class ProfileScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        automaticallyImplyLeading: false,
-        title: const Text("Profile"),
+        title: const Text(
+          'Profile',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: Colors.teal,
+        foregroundColor: Colors.white,
+        elevation: 0.5,
         actions: [
           IconButton(onPressed: () {}, icon: const Icon(Icons.settings)),
         ],
@@ -153,10 +158,10 @@ class ProfileScreen extends ConsumerWidget {
                         () => Navigator.pushNamed(context, "/payment"),
                       ),
                       buildGridItem(
-                        Icons.history,
-                        "History",
+                        Icons.location_pin,
+                        "Address",
                         Colors.orange,
-                        () => Navigator.pushNamed(context, "/history"),
+                        () => Navigator.pushNamed(context, "/address"),
                       ),
                     ],
                   ),

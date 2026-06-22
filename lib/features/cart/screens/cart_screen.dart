@@ -147,32 +147,315 @@ class CartScreen extends ConsumerWidget {
                           ),
                         ),
                         onPressed: cartItems.isEmpty
-                            ? null // Cart အလွတ်ဖြစ်နေရင် နှိပ်လို့မရအောင် ပိတ်ထားမယ်
+                            ? null
                             : () {
-                                ref
-                                    .read(ordersProvider.notifier)
-                                    .placeOrder(
-                                      cartItems,
-                                      ref
-                                          .read(cartProvider.notifier)
-                                          .totalPrice,
-                                      "No.123, Mahabandoola Road, Yangon",
-                                    );
+                                final formKey = GlobalKey<FormState>();
+                                final phoneController = TextEditingController();
+                                final detailedAddressController =
+                                    TextEditingController();
 
-                                showDialog(
+                                final List<String> regions = [
+                                  'Yangon',
+                                  'Mandalay',
+                                  'Naypyidaw',
+                                  'Bago',
+                                  'Sagaing',
+                                  'Magway',
+                                  'Ayeyarwady',
+                                  'Thanintharyi',
+                                  'Kachin',
+                                  'Kayah',
+                                  'Kayin',
+                                  'Chin',
+                                  'Mon',
+                                  'Rakhine',
+                                  'Shan',
+                                ];
+
+                                String? selectedRegion;
+
+                                showModalBottomSheet(
                                   context: context,
-                                  builder: (ctx) => AlertDialog(
-                                    title: const Text('Success!'),
-                                    content: const Text(
-                                      'Your order has been placed successfully.',
+                                  isScrollControlled: true,
+                                  shape: const RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.vertical(
+                                      top: Radius.circular(24),
                                     ),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () => Navigator.pop(ctx),
-                                        child: const Text('OK'),
-                                      ),
-                                    ],
                                   ),
+                                  builder: (context) {
+                                    return StatefulBuilder(
+                                      builder:
+                                          (
+                                            BuildContext context,
+                                            StateSetter setModalState,
+                                          ) {
+                                            return Padding(
+                                              padding: EdgeInsets.only(
+                                                bottom:
+                                                    MediaQuery.of(
+                                                      context,
+                                                    ).viewInsets.bottom +
+                                                    20,
+                                                top: 24,
+                                                left: 20,
+                                                right: 20,
+                                              ),
+                                              child: Form(
+                                                key: formKey,
+                                                child: SingleChildScrollView(
+                                                  child: Column(
+                                                    mainAxisSize:
+                                                        MainAxisSize.min,
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                      Row(
+                                                        children: [
+                                                          Container(
+                                                            padding:
+                                                                const EdgeInsets.all(
+                                                                  8,
+                                                                ),
+                                                            decoration: BoxDecoration(
+                                                              color: Colors.teal
+                                                                  .withOpacity(
+                                                                    0.1,
+                                                                  ),
+                                                              borderRadius:
+                                                                  BorderRadius.circular(
+                                                                    8,
+                                                                  ),
+                                                            ),
+                                                            child: const Icon(
+                                                              Icons
+                                                                  .local_shipping,
+                                                              color:
+                                                                  Colors.teal,
+                                                            ),
+                                                          ),
+                                                          const SizedBox(
+                                                            width: 12,
+                                                          ),
+                                                          const Text(
+                                                            'Delivery Details (COD)',
+                                                            style: TextStyle(
+                                                              fontSize: 18,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold,
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                      const Divider(height: 30),
+
+                                                      // 📞 ၁။ ဖုန်းနံပါတ် ထည့်ရန် (တန်ဖိုး စစ်ဆေးစနစ် ပါဝင်သည်)
+                                                      const Text(
+                                                        'Contact Information',
+                                                        style: TextStyle(
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          fontSize: 14,
+                                                        ),
+                                                      ),
+                                                      const SizedBox(height: 8),
+                                                      TextFormField(
+                                                        controller:
+                                                            phoneController,
+                                                        keyboardType:
+                                                            TextInputType.phone,
+                                                        decoration: const InputDecoration(
+                                                          labelText:
+                                                              'Phone Number',
+                                                          hintText:
+                                                              '09xxxxxxxxx',
+                                                          prefixIcon: Icon(
+                                                            Icons.phone_android,
+                                                          ),
+                                                          border:
+                                                              OutlineInputBorder(),
+                                                        ),
+                                                        // မြန်မာဖုန်းနံပါတ်အတွက် ရှစ်လုံးမှ ဆယ့်တစ်လုံးကြား ရှိမရှိ သေချာစစ်ဆေးခြင်း
+                                                        validator: (val) {
+                                                          if (val == null ||
+                                                              val.isEmpty) {
+                                                            return 'Please enter your phone number';
+                                                          }
+                                                          if (val.length < 8 ||
+                                                              val.length > 11) {
+                                                            return 'Please enter a valid phone number (8-11 digits)';
+                                                          }
+                                                          return null;
+                                                        },
+                                                      ),
+                                                      const SizedBox(
+                                                        height: 20,
+                                                      ),
+
+                                                      const Text(
+                                                        'Delivery Address',
+                                                        style: TextStyle(
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          fontSize: 14,
+                                                        ),
+                                                      ),
+                                                      const SizedBox(height: 8),
+                                                      DropdownButtonFormField<
+                                                        String
+                                                      >(
+                                                        value: selectedRegion,
+                                                        hint: const Text(
+                                                          'Select State / Region',
+                                                        ),
+                                                        decoration:
+                                                            const InputDecoration(
+                                                              prefixIcon: Icon(
+                                                                Icons.map,
+                                                              ),
+                                                              border:
+                                                                  OutlineInputBorder(),
+                                                            ),
+                                                        items: regions.map((
+                                                          String region,
+                                                        ) {
+                                                          return DropdownMenuItem<
+                                                            String
+                                                          >(
+                                                            value: region,
+                                                            child: Text(region),
+                                                          );
+                                                        }).toList(),
+                                                        onChanged: (newValue) {
+                                                          // StatefulBuilder ၏ state ကို ပြောင်းလဲစေခြင်း
+                                                          setModalState(() {
+                                                            selectedRegion =
+                                                                newValue;
+                                                          });
+                                                        },
+                                                        validator: (val) =>
+                                                            val == null
+                                                            ? 'Please select your region'
+                                                            : null,
+                                                      ),
+                                                      const SizedBox(
+                                                        height: 12,
+                                                      ),
+
+                                                      // 🏠 ၃။ အိမ်အမှတ်၊ လမ်း၊ မြို့နယ် အသေးစိတ်ရိုက်ရန် TextField
+                                                      TextFormField(
+                                                        controller:
+                                                            detailedAddressController,
+                                                        maxLines: 3,
+                                                        decoration: const InputDecoration(
+                                                          labelText:
+                                                              'Detailed Address',
+                                                          hintText:
+                                                              'e.g., Room 4B, Building 12, Mahabandoola Road, Latha Township',
+                                                          alignLabelWithHint:
+                                                              true, // maxLines များနေလျှင် Label ကို အပေါ်တင်ပေးရန်
+                                                          border:
+                                                              OutlineInputBorder(),
+                                                        ),
+                                                        validator: (val) =>
+                                                            val == null ||
+                                                                val.isEmpty
+                                                            ? 'Please enter your street & township details'
+                                                            : null,
+                                                      ),
+                                                      const SizedBox(
+                                                        height: 24,
+                                                      ),
+
+                                                      // 🛒 အော်ဒါ အတည်ပြုရန် ခလုတ်
+                                                      ElevatedButton(
+                                                        style: ElevatedButton.styleFrom(
+                                                          backgroundColor:
+                                                              Colors.teal,
+                                                          minimumSize:
+                                                              const Size(
+                                                                double.infinity,
+                                                                52,
+                                                              ),
+                                                          shape: RoundedRectangleBorder(
+                                                            borderRadius:
+                                                                BorderRadius.circular(
+                                                                  12,
+                                                                ),
+                                                          ),
+                                                        ),
+                                                        onPressed: () {
+                                                          if (formKey
+                                                              .currentState!
+                                                              .validate()) {
+                                                            // စာသားများကို ပေါင်းစပ်ပြီး တိကျသော လိပ်စာတစ်ခု တည်ဆောက်ခြင်း
+                                                            final fullAddress =
+                                                                "$selectedRegion, ${detailedAddressController.text}";
+
+                                                            // Provider ထံသို့ ဒေတာလှမ်းပို့ခြင်း
+                                                            ref
+                                                                .read(
+                                                                  ordersProvider
+                                                                      .notifier,
+                                                                )
+                                                                .placeOrder(
+                                                                  cartItems:
+                                                                      cartItems,
+                                                                  total: ref
+                                                                      .read(
+                                                                        cartProvider
+                                                                            .notifier,
+                                                                      )
+                                                                      .totalPrice,
+                                                                  address:
+                                                                      fullAddress,
+                                                                  phone:
+                                                                      phoneController
+                                                                          .text,
+                                                                );
+
+                                                            Navigator.pop(
+                                                              context,
+                                                            );
+
+                                                            ScaffoldMessenger.of(
+                                                              context,
+                                                            ).showSnackBar(
+                                                              SnackBar(
+                                                                content: Text(
+                                                                  '🎉 Order Placed to $fullAddress successfully!',
+                                                                ),
+                                                                backgroundColor:
+                                                                    Colors
+                                                                        .green,
+                                                                duration:
+                                                                    const Duration(
+                                                                      seconds:
+                                                                          3,
+                                                                    ),
+                                                              ),
+                                                            );
+                                                          }
+                                                        },
+                                                        child: const Text(
+                                                          'Confirm & Place Order',
+                                                          style: TextStyle(
+                                                            color: Colors.white,
+                                                            fontSize: 16,
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                    );
+                                  },
                                 );
                               },
                         child: const Text(

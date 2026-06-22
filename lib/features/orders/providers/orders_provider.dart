@@ -29,7 +29,12 @@ class OrdersNotifier extends Notifier<List<OrderModel>> {
     );
   }
 
-  void placeOrder(List<CartItemModel> cartItems, double total, String address) {
+  void placeOrder({
+    required List<CartItemModel> cartItems,
+    required double total,
+    required String address,
+    required String phone,
+  }) {
     if (_userId == null || cartItems.isEmpty) return;
 
     final newOrder = OrderModel(
@@ -38,6 +43,8 @@ class OrdersNotifier extends Notifier<List<OrderModel>> {
       totalAmount: total,
       orderDate: DateTime.now(),
       shippingAddress: address,
+      phoneNumber: phone,
+      paymentMethod: 'Cash on Delivery',
     );
 
     final updatedList = [newOrder, ...state];

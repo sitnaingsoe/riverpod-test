@@ -6,7 +6,9 @@ class OrderModel {
   final double totalAmount;
   final DateTime orderDate;
   final String shippingAddress;
+  final String phoneNumber;
   final String status;
+  final String paymentMethod;
 
   OrderModel({
     required this.id,
@@ -14,6 +16,8 @@ class OrderModel {
     required this.totalAmount,
     required this.orderDate,
     required this.shippingAddress,
+    required this.phoneNumber,
     this.status = 'Pending',
+    this.paymentMethod = 'Cash on Delivery',
   });
 }
