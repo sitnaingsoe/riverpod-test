@@ -123,8 +123,61 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
         elevation: 0.5,
         actions: [
           IconButton(
-            onPressed: () => ref.read(authProvider.notifier).logout(),
-            icon: const Icon(Icons.logout_rounded),
+            icon: const Icon(Icons.logout),
+            onPressed: () {
+              // 🔥 ၁။ Logout ခလုတ်နှိပ်လိုက်ရင် Confirmation Dialog ကို အရင်ပြမယ်
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    title: const Row(
+                      children: [
+                        Icon(Icons.logout_rounded, color: Colors.red),
+                        SizedBox(width: 8),
+                        Text('Logout'),
+                      ],
+                    ),
+                    content: const Text(
+                      'Are you sure you want to logout from your account?',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () {
+                          Navigator.of(
+                            context,
+                          ).pop(); // Dialog Box ကို ပိတ်လိုက်မယ်
+                        },
+                        child: const Text(
+                          'Cancel',
+                          style: TextStyle(
+                            color: Colors.grey,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          ref.read(authProvider.notifier).logout();
+                        },
+                        child: const Text('Logout'),
+                      ),
+                    ],
+                  );
+                },
+              );
+            },
           ),
         ],
       ),

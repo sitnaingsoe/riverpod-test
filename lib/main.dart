@@ -9,6 +9,7 @@ void main() async {
   await Hive.initFlutter();
   Hive.registerAdapter(ProductModelAdapter());
   await Hive.openBox<ProductModel>('products_box');
+  await Hive.openBox('user_favorites_box');
   runApp(const ProviderScope(child: MyApp()));
 }
 

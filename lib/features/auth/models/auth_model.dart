@@ -24,14 +24,14 @@ class AuthModel {
   factory AuthModel.fromJson(Map<String, dynamic> json) {
     return AuthModel(
       id: json['id'] as int,
-      username: json['username'] as String,
-      email: json['email'] as String,
-      firstName: json['firstName'] as String,
-      lastName: json['lastName'] as String,
-      gender: json['gender'] as String,
-      image: json['image'] as String,
-      accessToken: json['accessToken'] as String,
-      refreshToken: json['refreshToken'] as String,
+      username: json['username'] ?? '',
+      email: json['email'] ?? '',
+      firstName: json['firstName'] ?? '',
+      lastName: json['lastName'] ?? '',
+      gender: json['gender'] ?? '',
+      image: json['image'] ?? '',
+      accessToken: json['accessToken'] ?? '',
+      refreshToken: json['refreshToken'] ?? '',
     );
   }
 

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:cached_network_image/cached_network_image.dart'; // 💡 ဖြေရှင်းချက် (၁) - Package ကို Import လုပ်ပါ
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:riverpod_test/features/cart/providers/cart_provider.dart';
+import 'package:riverpod_test/features/favorites/providers/favorites_provider.dart';
 import 'package:riverpod_test/features/products/models/product_model.dart';
 
 class ProductGridItem extends ConsumerWidget {
@@ -12,6 +13,9 @@ class ProductGridItem extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final favorites = ref.watch(favoritesProvider);
+    final isFavorite = favorites.any((item) => item.id == product.id);
+
     final isInCart = ref
         .watch(cartProvider)
         .any((item) => item.product.id == product.id);
@@ -36,17 +40,13 @@ class ProductGridItem extends ConsumerWidget {
                     height: double.infinity,
                     color: Colors.grey[50],
                     padding: const EdgeInsets.all(12),
-                    // 💡 ဖြေရှင်းချက် (၂) - Image.network အစား CachedNetworkImage ဖြင့် အစားထိုးပြီး Memory အား ထိန်းချုပ်ခြင်း
                     child: CachedNetworkImage(
                       imageUrl: product.thumbnail,
                       fit: BoxFit.contain,
 
-                      // 🔥 အရေးကြီးဆုံးအပိုင်း- ပုံကြီးများကို GPU Buffer ပေါ်မတင်မီ ၂၀၀x၂၀၀ အတိုင်းအတာသို့ ချုံ့ပစ်ရန် ခိုင်းစေခြင်း
-                      // ဒါဆိုရင် အရှိန်ပြင်းပြင်း Scroll ဆွဲလည်း BLASTBufferQueue Error လုံးဝ မတက်တော့ပါ။
                       memCacheWidth: 200,
                       memCacheHeight: 200,
 
-                      // ပုံစဆွဲနေစဉ် Loading ဖြစ်နေသည့်အချိန်တွင် ပြသမည့်စနစ်
                       placeholder: (context, url) => Container(
                         color: Colors.grey[100],
                         child: const Center(
@@ -61,7 +61,6 @@ class ProductGridItem extends ConsumerWidget {
                         ),
                       ),
 
-                      // 💡 ဖြေရှင်းချက် (၃) - အင်တာနက်မရှိ၍ ပုံဆွဲမရပါက Layout ပျက်မသွားစေရန် ပုံရိပ်မရှိကြောင်း အစားထိုးပြသခြင်း
                       errorWidget: (context, url, error) => Container(
                         color: Colors.grey[100],
                         child: const Icon(
@@ -76,30 +75,53 @@ class ProductGridItem extends ConsumerWidget {
                   Positioned(
                     top: 8,
                     right: 8,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        // ignore: deprecated_member_use
-                        color: Colors.white.withOpacity(0.9),
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
+                    child: Consumer(
+                      builder: (context, ref, child) {
+                        return Container(
+                          decoration: BoxDecoration(
                             // ignore: deprecated_member_use
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
+                            color: Colors.white.withOpacity(0.9),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                // ignore: deprecated_member_use
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                      child: IconButton(
-                        constraints: const BoxConstraints(),
-                        padding: const EdgeInsets.all(6),
-                        icon: const Icon(
-                          Icons.favorite_border,
-                          color: Colors.grey,
-                          size: 20,
-                        ),
-                        onPressed: () {},
-                      ),
+                          child: IconButton(
+                            onPressed: () {
+                              ref
+                                  .read(favoritesProvider.notifier)
+                                  .toggleFavorite(product);
+
+                              ScaffoldMessenger.of(context).clearSnackBars();
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    isFavorite
+                                        ? '${product.title} removed from favorites!'
+                                        : '${product.title} added to favorites!',
+                                  ),
+                                  backgroundColor: isFavorite
+                                      ? Colors.red.shade700
+                                      : Colors.teal,
+                                  duration: const Duration(seconds: 1),
+                                ),
+                              );
+                            },
+                            icon: Icon(
+                              isFavorite
+                                  ? Icons.favorite
+                                  : Icons.favorite_border,
+                              color: isFavorite ? Colors.red : Colors.grey,
+                              size: 20,
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ),
                 ],
@@ -193,9 +215,7 @@ class ProductGridItem extends ConsumerWidget {
                                   product.id,
                                 ); // သို့မဟုတ် product
 
-                            ScaffoldMessenger.of(
-                              context,
-                            ).clearSnackBars(); // ယခင် SnackBar ကို ဖျက်ရန်
+                            ScaffoldMessenger.of(context).clearSnackBars();
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text(

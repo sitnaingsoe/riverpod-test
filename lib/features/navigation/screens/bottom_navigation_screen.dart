@@ -4,6 +4,7 @@ import 'package:riverpod_test/features/cart/screens/cart_screen.dart';
 import 'package:riverpod_test/features/products/providers/product_provider.dart';
 import 'package:riverpod_test/features/products/screens/product_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:riverpod_test/features/profile/screens/profile_screen.dart';
 
 class BottomNavigationScreen extends ConsumerWidget {
   const BottomNavigationScreen({super.key});
@@ -18,9 +19,7 @@ class BottomNavigationScreen extends ConsumerWidget {
     final List<Widget> screens = [
       const ProductsScreen(),
       const CartScreen(),
-      const Center(
-        child: Text('Profile Screen (Coming Soon)'),
-      ), // Tab 2 // Tab 1
+      const ProfileScreen(),
     ];
     return Scaffold(
       body: IndexedStack(index: selectedIndex, children: screens),

@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_test/features/cart/providers/cart_provider.dart';
+import 'package:riverpod_test/features/favorites/providers/favorites_provider.dart';
 import 'package:riverpod_test/features/products/models/product_model.dart';
 
 class ProductDetailScreen extends ConsumerWidget {
@@ -11,6 +12,8 @@ class ProductDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final favorites = ref.watch(favoritesProvider);
+    final isFavorite = favorites.any((item) => item.id == product.id);
     final cartNotifier = ref.read(cartProvider.notifier);
     return Scaffold(
       backgroundColor: Colors.white,
@@ -205,12 +208,29 @@ class ProductDetailScreen extends ConsumerWidget {
                         borderRadius: BorderRadius.circular(14),
                       ),
                       child: IconButton(
-                        icon: const Icon(
-                          Icons.favorite_border,
-                          color: Colors.grey,
+                        icon: Icon(
+                          isFavorite ? Icons.favorite : Icons.favorite_border,
+                          color: isFavorite ? Colors.red : Colors.grey,
                         ),
                         onPressed: () {
-                          // 💡 Wishlist logic ထည့်ရန်နေရာ
+                          ref
+                              .read(favoritesProvider.notifier)
+                              .toggleFavorite(product);
+
+                          ScaffoldMessenger.of(context).clearSnackBars();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                isFavorite
+                                    ? '${product.title} removed from favorites!'
+                                    : '${product.title} added to favorites!',
+                              ),
+                              backgroundColor: isFavorite
+                                  ? Colors.red.shade700
+                                  : Colors.teal,
+                              duration: const Duration(seconds: 1),
+                            ),
+                          );
                         },
                       ),
                     ),
@@ -229,7 +249,6 @@ class ProductDetailScreen extends ConsumerWidget {
                           elevation: 0,
                         ),
                         onPressed: () {
-                          // 💡 ဤနေရာတွင် မင်းရဲ့ CartProvider ကို လှမ်းခေါ်ပြီး ပစ္စည်းထည့်ခိုင်းပါမယ်
                           cartNotifier.addToCart(product);
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
