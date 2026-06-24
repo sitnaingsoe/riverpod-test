@@ -12,10 +12,6 @@ void main() async {
 
   await Hive.initFlutter();
 
-  if (!Hive.isAdapterRegistered(1)) {
-    Hive.registerAdapter(ProductModelAdapter());
-  }
-
   if (!Hive.isAdapterRegistered(0)) {
     Hive.registerAdapter(AuthModelAdapter());
   }

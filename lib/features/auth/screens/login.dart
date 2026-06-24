@@ -10,8 +10,8 @@ class LoginScreen extends ConsumerStatefulWidget {
 }
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
-  final _usernameController = TextEditingController(text: 'emilys');
-  final _passwordController = TextEditingController(text: 'emilyspass');
+  final _usernameController = TextEditingController();
+  final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
   @override
@@ -111,13 +111,26 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                   ),
                   orElse: () => ElevatedButton(
-                    onPressed: () {
+                    onPressed: () async {
                       if (_formKey.currentState!.validate()) {
                         final username = _usernameController.text.trim();
                         final password = _passwordController.text.trim();
-                        ref
-                            .read(authProvider.notifier)
-                            .login(username, password);
+
+                        try {
+                          await ref
+                              .read(authProvider.notifier)
+                              .login(username, password);
+
+                          if (context.mounted) {
+                            Navigator.pushReplacementNamed(context, '/home');
+                          }
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Login Failed: $e')),
+                            );
+                          }
+                        }
                       }
                     },
                     style: ElevatedButton.styleFrom(

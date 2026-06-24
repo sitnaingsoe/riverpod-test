@@ -1,6 +1,5 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hive/hive.dart';
 import 'package:riverpod_test/features/products/models/product_model.dart';
 import '../services/product_service.dart';
 
@@ -11,7 +10,6 @@ final connectivityStreamProvider = StreamProvider<List<ConnectivityResult>>((
 });
 
 class ProductNotifier extends AsyncNotifier<List<ProductModel>> {
-  final _productsBox = Hive.box<ProductModel>('products_box');
   List<ProductModel> _allProducts = [];
   int _skip = 0;
   final int _limit = 10;
@@ -25,13 +23,6 @@ class ProductNotifier extends AsyncNotifier<List<ProductModel>> {
   Future<List<ProductModel>> build() async {
     final searchQuery = ref.watch(productSearchQueryProvider);
     final selectedCategory = ref.watch(selectedCategoryProvider);
-
-    final connectivityResult = await Connectivity().checkConnectivity();
-    final hasConnection = connectivityResult.any(
-      (result) =>
-          result == ConnectivityResult.wifi ||
-          result == ConnectivityResult.mobile,
-    );
 
     _skip = 0;
     _hasMoreData = true;
@@ -49,35 +40,17 @@ class ProductNotifier extends AsyncNotifier<List<ProductModel>> {
       }
 
       if (selectedCategory != 'all') {
-        if (!hasConnection) {
-          _allProducts = _productsBox.values
-              .where(
-                (p) =>
-                    p.category.toLowerCase() == selectedCategory.toLowerCase(),
-              )
-              .toList();
-          _hasMoreData = false;
-          return _allProducts;
-        }
         _allProducts = await service.fetchProductsByCategory(selectedCategory);
         _hasMoreData = false;
         return _allProducts;
       }
 
-      if (!hasConnection) {
-        _allProducts = _productsBox.values.toList();
-        _hasMoreData = _allProducts.length >= _limit;
-        return _allProducts;
-      }
       final initialProducts = await service.fetchProducts(
         limit: _limit,
         skip: _skip,
       );
 
       _allProducts.addAll(initialProducts);
-
-      await _productsBox.clear();
-      await _productsBox.addAll(initialProducts);
 
       if (initialProducts.length < _limit) {
         _hasMoreData = false;
@@ -88,13 +61,7 @@ class ProductNotifier extends AsyncNotifier<List<ProductModel>> {
       _isLoadingMore = false;
       ref.read(productErrorProvider.notifier).state = 'Failed to sync data.';
 
-      if (_productsBox.isNotEmpty) {
-        _allProducts = _productsBox.values.toList();
-        return _allProducts;
-      }
-
-      update((_) => throw e);
-      return [];
+      throw e;
     }
   }
 
@@ -134,7 +101,6 @@ class ProductNotifier extends AsyncNotifier<List<ProductModel>> {
       if (newProducts.isEmpty) {
         _hasMoreData = false;
       } else {
-        await _productsBox.addAll(newProducts);
         _allProducts.addAll(newProducts);
         if (newProducts.length < _limit) _hasMoreData = false;
       }

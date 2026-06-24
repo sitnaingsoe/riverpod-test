@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:riverpod_test/features/auth/screens/login.dart';
+import 'package:riverpod_test/features/auth/providers/auth_provider.dart';
 import 'package:riverpod_test/features/profile/providers/profile_provider.dart';
 
 class ProfileScreen extends ConsumerWidget {
@@ -9,8 +9,7 @@ class ProfileScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final profileAsync = ref.watch(profileProvider);
-
+    final authAsync = ref.watch(authProvider);
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -24,7 +23,7 @@ class ProfileScreen extends ConsumerWidget {
           IconButton(onPressed: () {}, icon: const Icon(Icons.settings)),
         ],
       ),
-      body: profileAsync.when(
+      body: authAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
 
         error: (err, stack) =>
@@ -32,12 +31,6 @@ class ProfileScreen extends ConsumerWidget {
 
         data: (user) {
           if (user == null) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (_) => const LoginScreen()),
-              );
-            });
             return const SizedBox.shrink();
           }
 
@@ -222,7 +215,61 @@ class ProfileScreen extends ConsumerWidget {
                       ), // 💡 အရောင် ထည့်ပေးထားပါတယ်
                       onPressed: () {
                         // 🔥 Notifier ထဲက logout ကို လှမ်းခေါ်ခြင်း
-                        ref.read(profileProvider.notifier).logout();
+                        showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              title: const Row(
+                                children: [
+                                  Icon(Icons.logout_rounded, color: Colors.red),
+                                  SizedBox(width: 8),
+                                  Text('Logout'),
+                                ],
+                              ),
+                              content: const Text(
+                                'Are you sure you want to logout from your account?',
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.of(
+                                      context,
+                                    ).pop(); // Dialog Box ကို ပိတ်လိုက်မယ်
+                                  },
+                                  child: const Text(
+                                    'Cancel',
+                                    style: TextStyle(
+                                      color: Colors.grey,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+
+                                ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.red,
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
+                                  onPressed: () {
+                                    Navigator.of(context).pop();
+                                    ref.read(authProvider.notifier).logout();
+                                    Navigator.pushReplacementNamed(
+                                      context,
+                                      '/login',
+                                    );
+                                  },
+                                  child: const Text('Logout'),
+                                ),
+                              ],
+                            );
+                          },
+                        );
                       },
                       child: const Text(
                         "Logout",

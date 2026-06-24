@@ -78,11 +78,6 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
                 result == ConnectivityResult.wifi ||
                 result == ConnectivityResult.mobile,
           );
-
-          if (hasConnection && paginationError != null) {
-            ref.read(productErrorProvider.notifier).state =
-                null; // Error Panel ပိတ်မည်
-          }
         }
       },
     );
@@ -168,6 +163,7 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
                         onPressed: () {
                           Navigator.of(context).pop();
                           ref.read(authProvider.notifier).logout();
+                          Navigator.pushReplacementNamed(context, '/login');
                         },
                         child: const Text('Logout'),
                       ),
@@ -175,6 +171,7 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
                   );
                 },
               );
+            
             },
           ),
         ],
@@ -279,7 +276,6 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
                 return RefreshIndicator(
                   color: Colors.teal, // Loading စက်ဝိုင်းအရောင်
                   onRefresh: () async {
-                    // 🔥 ၂။ ဒေတာအသစ် ပြန်ဆွဲရန်အတွက် Provider ကို refresh/invalidate လုပ်ခြင်း
                     ref.invalidate(productsProvider);
 
                     ref.invalidate(categoriesProvider);
@@ -341,9 +337,10 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
                       ],
                     ),
                     TextButton.icon(
-                      onPressed: () {
+                      onPressed: () async {
                         ref.read(productErrorProvider.notifier).state = null;
                         ref.read(productsProvider.notifier).loadMoreProducts();
+                        ref.invalidate(categoriesProvider);
                       },
                       icon: const Icon(
                         Icons.refresh_rounded,
