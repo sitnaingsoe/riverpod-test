@@ -1,55 +1,69 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
+import 'package:riverpod_test/features/auth/providers/auth_provider.dart';
 import 'package:riverpod_test/features/products/models/product_model.dart';
-import 'package:riverpod_test/features/profile/providers/profile_provider.dart';
 
 const String kFavoritesBoxName = 'user_favorites_box';
 
-class FavoritesNotifier extends Notifier<List<ProductModel>> {
+class FavoritesNotifier extends AsyncNotifier<List<ProductModel>> {
   late Box _favoriteBox;
   String? _userId;
+
   @override
-  List<ProductModel> build() {
+  Future<List<ProductModel>> build() async {
     _favoriteBox = Hive.box(kFavoritesBoxName);
-    final authState = ref.watch(profileProvider);
-    return authState.maybeWhen(
+    final authState = ref.watch(authProvider);
+
+    return authState.when(
       data: (user) {
         if (user != null) {
           _userId = user.id.toString();
-        }
-        final List<dynamic>? dynamicList = _favoriteBox.get(_userId);
-        if (dynamicList != null) {
-          return dynamicList.cast<ProductModel>();
+          print("🎯 Current Login User ID is: $_userId");
+
+          final List<dynamic>? dynamicList = _favoriteBox.get(_userId);
+
+          print("📦 Retrieved Dynamic List: $dynamicList");
+
+          if (dynamicList != null) {
+            return dynamicList.map((item) {
+              return ProductModel.fromJson(Map<String, dynamic>.from(item));
+            }).toList();
+          }
+        } else {
+          print("👤 User is NULL inside FavoritesNotifier!");
+          _userId = null;
         }
         return [];
       },
-      orElse: () => [],
+      loading: () => const [],
+      error: (err, stack) => [],
     );
   }
 
-  void toggleFavorite(ProductModel product) {
+  void toggleFavorite(ProductModel product) async {
     if (_userId == null) return;
 
-    final isExist = state.any((item) => item.id == product.id);
+    final currentList = state.value ?? [];
+    final isExist = currentList.any((item) => item.id == product.id);
     List<ProductModel> updatedList;
 
     if (isExist) {
-      updatedList = state.where((item) => item.id != product.id).toList();
+      updatedList = currentList.where((item) => item.id != product.id).toList();
     } else {
-      updatedList = [...state, product];
+      updatedList = [...currentList, product];
     }
-
-    _favoriteBox.put(_userId, updatedList);
-
-    state = updatedList;
+    final jsonList = updatedList.map((item) => item.toJson()).toList();
+    await _favoriteBox.put(_userId, jsonList);
+    state = AsyncData(updatedList);
   }
 
   bool isFavorite(int productId) {
-    return state.any((item) => item.id == productId);
+    final currentList = state.value ?? [];
+    return currentList.any((item) => item.id == productId);
   }
 }
 
 final favoritesProvider =
-    NotifierProvider<FavoritesNotifier, List<ProductModel>>(() {
+    AsyncNotifierProvider<FavoritesNotifier, List<ProductModel>>(() {
       return FavoritesNotifier();
     });

@@ -136,7 +136,7 @@ class ProfileScreen extends ConsumerWidget {
                         Icons.favorite,
                         "Favorite",
                         Colors.red,
-                        () => context.push("/favorites"),
+                        () => Navigator.pushNamed(context, '/favorite'),
                       ),
                       buildGridItem(
                         Icons.shopping_cart,

@@ -73,11 +73,7 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
       (previous, next) {
         if (next.hasValue) {
           final results = next.value!;
-          final hasConnection = results.any(
-            (result) =>
-                result == ConnectivityResult.wifi ||
-                result == ConnectivityResult.mobile,
-          );
+        
         }
       },
     );

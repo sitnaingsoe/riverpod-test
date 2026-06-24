@@ -1,10 +1,10 @@
 import 'package:hive/hive.dart';
 
 // 1. This must match the filename exactly (e.g., if this file is favorite_model.dart)
-part 'product_model.g.dart';
+part 'favorite_product_model.g.dart';
 
-@HiveType(typeId: 2) // 2. Assign a unique typeId (0-223)
-class ProductModel extends HiveObject {
+@HiveType(typeId: 3) // 2. Assign a unique typeId (0-223)
+class FavoriteModel extends HiveObject {
   @HiveField(0)
   final int id;
 
@@ -27,7 +27,7 @@ class ProductModel extends HiveObject {
   final String thumbnail;
 
   // Fixed the constructor name to match the class
-  ProductModel({
+  FavoriteModel({
     required this.id,
     required this.title,
     required this.price,
@@ -37,16 +37,15 @@ class ProductModel extends HiveObject {
     required this.thumbnail,
   });
 
-  factory ProductModel.fromJson(Map<String, dynamic> map) {
-    return ProductModel(
-      id: map['id']?.toInt() ?? 0,
-      title: map['title'] ?? '',
-      // price က int ရော double ရော လာနိုင်လို့ .toDouble() ခံပေးတာ စိတ်ချရဆုံးပါ
-      price: (map['price'] ?? 0.0).toDouble(),
-      rating: (map['rating'] ?? 0.0).toDouble(),
-      thumbnail: map['thumbnail'] ?? '',
-      category: map['category'] ?? '',
-      description: map['description'] ?? '',
+  factory FavoriteModel.fromJson(Map<String, dynamic> json) {
+    return FavoriteModel(
+      id: json['id'] as int,
+      title: json['title'] as String,
+      price: (json['price'] as num).toDouble(),
+      description: json['description'] as String,
+      category: json['category'] as String,
+      rating: (json['rating'] as num).toDouble(),
+      thumbnail: json['thumbnail'] as String,
     );
   }
 

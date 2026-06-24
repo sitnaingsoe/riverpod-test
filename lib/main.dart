@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:riverpod_test/features/auth/models/auth_model.dart';
+import 'package:riverpod_test/features/favorites/models/favorite_product_model.dart';
+import 'package:riverpod_test/features/favorites/screens/favorites_screen.dart';
 import 'package:riverpod_test/features/products/models/product_model.dart';
 import 'package:riverpod_test/features/auth/screens/login.dart'; // သင့်ဖိုင်လမ်းကြောင်းအတိုင်း ပြင်ပါ
 import 'package:riverpod_test/features/auth/screens/splash_screen.dart';
@@ -15,7 +17,11 @@ void main() async {
   if (!Hive.isAdapterRegistered(0)) {
     Hive.registerAdapter(AuthModelAdapter());
   }
+  if (!Hive.isAdapterRegistered(3)) {
+    Hive.registerAdapter(FavoriteModelAdapter());
+  }
 
+  // Open your favorites box
   await Hive.openBox<ProductModel>('products_box');
   await Hive.openBox('user_favorites_box');
   await Hive.openBox('authBox');
@@ -40,6 +46,7 @@ class MyApp extends ConsumerWidget {
         '/splash': (context) => const SplashScreen(),
         '/login': (context) => const LoginScreen(),
         '/home': (context) => const BottomNavigationScreen(),
+        '/favorite': (context) => const FavoritesScreen(),
       },
     );
   }

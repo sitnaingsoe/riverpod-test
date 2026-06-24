@@ -12,8 +12,9 @@ class ProductDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final favorites = ref.watch(favoritesProvider);
-    final isFavorite = favorites.any((item) => item.id == product.id);
+    final favoritesAsync = ref.watch(favoritesProvider);
+    final favoriteList = favoritesAsync.value ?? [];
+    final isFavorite = favoriteList.any((item) => item.id == product.id);
     final cartNotifier = ref.read(cartProvider.notifier);
     return Scaffold(
       backgroundColor: Colors.white,

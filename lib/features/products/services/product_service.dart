@@ -19,11 +19,13 @@ class ProductService {
     );
   }
 
-  // 💡 စံနှုန်းပြ static JSON parsing ဖန်ရှင်များ (Isolate ပေါ်မှာ သီးသန့် အလုပ်လုပ်ပါမည်)
   static List<ProductModel> _parseProducts(dynamic data) {
     final List<dynamic> jsonList = data['products'];
     return jsonList.map((json) => ProductModel.fromJson(json)).toList();
   }
+
+  final String _productFields =
+      'id,title,price,description,category,rating,thumbnail';
 
   Future<List<ProductModel>> fetchProducts({
     required int limit,
@@ -32,7 +34,10 @@ class ProductService {
     try {
       final response = await _dio.get(
         'https://dummyjson.com/products',
-        queryParameters: {'limit': limit, 'skip': skip},
+        queryParameters: {
+          'limit': limit, 'skip': skip,
+          'select': _productFields, // 👈 Limits data to your model fields
+        },
       );
 
       if (response.statusCode == 200) {
@@ -56,7 +61,7 @@ class ProductService {
     try {
       final response = await _dio.get(
         'https://dummyjson.com/products/search',
-        queryParameters: {'q': query},
+        queryParameters: {'q': query, 'select': _productFields},
       );
       if (response.statusCode == 200) {
         return await compute(
@@ -76,6 +81,7 @@ class ProductService {
     try {
       final response = await _dio.get(
         'https://dummyjson.com/products/category/$categorySlug',
+        queryParameters: {'select': _productFields},
       );
       if (response.statusCode == 200) {
         return await compute(
