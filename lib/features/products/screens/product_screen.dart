@@ -79,7 +79,6 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
                 result == ConnectivityResult.mobile,
           );
 
-          // အင်တာနက် ပြန်ပွင့်လာပြီး လက်ရှိ screen မှာ error ပြနေလျှင်
           if (hasConnection && paginationError != null) {
             ref.read(productErrorProvider.notifier).state =
                 null; // Error Panel ပိတ်မည်
@@ -88,7 +87,6 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
       },
     );
 
-    // SnackBar Listener (မူလအတိုင်း ထားပါသည်)
     ref.listen<AsyncValue<List<ProductModel>>>(productsProvider, (
       previous,
       next,

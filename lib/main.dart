@@ -1,27 +1,50 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:riverpod_test/core/router/router_provider.dart';
+import 'package:riverpod_test/features/auth/models/auth_model.dart';
 import 'package:riverpod_test/features/products/models/product_model.dart';
+import 'package:riverpod_test/features/auth/screens/login.dart'; // သင့်ဖိုင်လမ်းကြောင်းအတိုင်း ပြင်ပါ
+import 'package:riverpod_test/features/auth/screens/splash_screen.dart';
+import 'package:riverpod_test/features/navigation/screens/bottom_navigation_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
   await Hive.initFlutter();
-  Hive.registerAdapter(ProductModelAdapter());
+
+  if (!Hive.isAdapterRegistered(1)) {
+    Hive.registerAdapter(ProductModelAdapter());
+  }
+
+  if (!Hive.isAdapterRegistered(0)) {
+    Hive.registerAdapter(AuthModelAdapter());
+  }
+
   await Hive.openBox<ProductModel>('products_box');
   await Hive.openBox('user_favorites_box');
+  await Hive.openBox('authBox');
+
   runApp(const ProviderScope(child: MyApp()));
 }
 
 class MyApp extends ConsumerWidget {
   const MyApp({super.key});
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final router = ref.watch(routerProvider);
-    return MaterialApp.router(
+    return MaterialApp(
       title: 'My Store',
-      theme: ThemeData(primarySwatch: Colors.teal),
-      routerConfig: router,
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),
+        useMaterial3: true,
+      ),
+      initialRoute: '/splash',
+      routes: {
+        '/splash': (context) => const SplashScreen(),
+        '/login': (context) => const LoginScreen(),
+        '/home': (context) => const BottomNavigationScreen(),
+      },
     );
   }
 }

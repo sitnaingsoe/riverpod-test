@@ -1,12 +1,34 @@
-class AuthModel {
+import 'package:hive/hive.dart';
+
+part 'auth_model.g.dart';
+
+@HiveType(typeId: 0)
+class AuthModel extends HiveObject {
+  @HiveField(0)
   final int? id;
+
+  @HiveField(1)
   final String username;
+
+  @HiveField(2)
   final String email;
+
+  @HiveField(3)
   final String firstName;
+
+  @HiveField(4)
   final String lastName;
+
+  @HiveField(5)
   final String gender;
+
+  @HiveField(6)
   final String image;
+
+  @HiveField(7)
   final String accessToken;
+
+  @HiveField(8)
   final String refreshToken;
 
   AuthModel({
@@ -23,7 +45,7 @@ class AuthModel {
 
   factory AuthModel.fromJson(Map<String, dynamic> json) {
     return AuthModel(
-      id: json['id'] as int,
+      id: json['id'] as int?,
       username: json['username'] ?? '',
       email: json['email'] ?? '',
       firstName: json['firstName'] ?? '',
@@ -35,7 +57,6 @@ class AuthModel {
     );
   }
 
-  // Method: AuthModel မှ JSON Map သို့ ပြောင်းလဲခြင်း (Local မှာ သိမ်းရင် သုံးနိုင်ပါတယ်)
   Map<String, dynamic> toJson() {
     return {
       'id': id,

@@ -4,7 +4,6 @@ import 'package:hive/hive.dart';
 import 'package:riverpod_test/features/products/models/product_model.dart';
 import '../services/product_service.dart';
 
-// Connectivity Stream Provider
 final connectivityStreamProvider = StreamProvider<List<ConnectivityResult>>((
   ref,
 ) {
@@ -43,14 +42,12 @@ class ProductNotifier extends AsyncNotifier<List<ProductModel>> {
     final service = ProductService();
 
     try {
-      // ၁။ Search Logic
       if (searchQuery.isNotEmpty) {
         _allProducts = await service.searchProducts(searchQuery);
         _hasMoreData = false;
         return _allProducts;
       }
 
-      // ၂။ Category Logic
       if (selectedCategory != 'all') {
         if (!hasConnection) {
           _allProducts = _productsBox.values

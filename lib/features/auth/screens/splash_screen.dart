@@ -1,8 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:riverpod_test/features/auth/services/auth_service.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -15,6 +14,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
+  final AuthService _authService = AuthService();
 
   @override
   void initState() {
@@ -42,18 +42,18 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     await Future.delayed(const Duration(seconds: 3));
     if (!mounted || !context.mounted) return;
 
-    final prefs = await SharedPreferences.getInstance();
+    final bool isAuthenticated = await _authService.checkAndRefreshAuth();
 
-    final accessToken = prefs.getString("accessToken");
-    if (kDebugMode) {
-      print('authuser -----------------------$accessToken');
-    }
     if (!mounted || !context.mounted) return;
-
-    if (accessToken != null) {
-      context.go('/home');
+    if (kDebugMode) {
+      print(
+        '################################################################isauthed $isAuthenticated',
+      );
+    }
+    if (isAuthenticated) {
+      Navigator.pushReplacementNamed(context, '/home');
     } else {
-      context.go('/login');
+      Navigator.pushReplacementNamed(context, '/login');
     }
   }
 
@@ -61,7 +61,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        // 💡 UI Improvement: ရိုးရိုးအဖြူရောင်အစား လှပတဲ့ Teal အရောင်ပြေး (Gradient) နောက်ခံသုံးထားပါတယ်
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
