@@ -8,6 +8,7 @@ import 'package:riverpod_test/features/products/models/product_model.dart';
 import 'package:riverpod_test/features/auth/screens/login.dart'; // သင့်ဖိုင်လမ်းကြောင်းအတိုင်း ပြင်ပါ
 import 'package:riverpod_test/features/auth/screens/splash_screen.dart';
 import 'package:riverpod_test/features/navigation/screens/bottom_navigation_screen.dart';
+import 'package:riverpod_test/features/products/screens/product_detail_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -47,6 +48,7 @@ class MyApp extends ConsumerWidget {
         '/login': (context) => const LoginScreen(),
         '/home': (context) => const BottomNavigationScreen(),
         '/favorite': (context) => const FavoritesScreen(),
+        '/product-detail': (context) => const ProductDetailScreen(),
       },
     );
   }

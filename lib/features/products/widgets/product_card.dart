@@ -1,7 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:riverpod_test/features/cart/providers/cart_provider.dart';
 import 'package:riverpod_test/features/favorites/providers/favorites_provider.dart';
 import 'package:riverpod_test/features/products/models/product_model.dart';
@@ -29,7 +28,12 @@ class ProductGridItem extends ConsumerWidget {
       child: InkWell(
         onTap: () {
           FocusManager.instance.primaryFocus?.unfocus();
-          context.push('/product-detail', extra: product);
+          Navigator.pushNamed(
+            context,
+            '/product-detail',
+            arguments:
+                product,
+          );
         },
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -38,7 +42,6 @@ class ProductGridItem extends ConsumerWidget {
               flex: 12,
               child: Stack(
                 children: [
-                  // Product Image Container
                   Container(
                     width: double.infinity,
                     height: double.infinity,

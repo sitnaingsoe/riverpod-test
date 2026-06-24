@@ -5,7 +5,6 @@ import 'package:riverpod_test/features/products/models/product_model.dart';
 import 'package:riverpod_test/features/products/providers/product_provider.dart';
 import 'dart:async';
 
-import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:riverpod_test/features/products/widgets/product_card.dart';
 import 'package:riverpod_test/features/products/widgets/product_skeleton.dart';
 
@@ -67,16 +66,6 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
     final isLoadMore = ref.watch(productsProvider).isLoading
         ? false
         : ref.read(productsProvider.notifier).isLoadingMore;
-
-    ref.listen<AsyncValue<List<ConnectivityResult>>>(
-      connectivityStreamProvider,
-      (previous, next) {
-        if (next.hasValue) {
-          final results = next.value!;
-        
-        }
-      },
-    );
 
     ref.listen<AsyncValue<List<ProductModel>>>(productsProvider, (
       previous,
@@ -167,7 +156,6 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
                   );
                 },
               );
-            
             },
           ),
         ],
@@ -213,51 +201,55 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
             ),
           ),
 
-          SizedBox(
-            height: 40,
-            child: categoriesAsync.when(
-              loading: () => const CategorySkeleton(),
-              error: (err, stack) => const Padding(
-                padding: EdgeInsets.only(left: 12),
-                child: Text('Error loading categories'),
-              ),
-              data: (categoriesList) {
-                return ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  itemCount: categoriesList.length,
-                  itemBuilder: (context, index) {
-                    final category = categoriesList[index];
-                    final slug = category['slug']!;
-                    final name = category['name']!;
-                    final isSelected = currentCategory == slug;
+          if (currentSearch.isEmpty) ...[
+            SizedBox(
+              height: 40,
+              child: categoriesAsync.when(
+                loading: () => const CategorySkeleton(),
+                error: (err, stack) => const Padding(
+                  padding: EdgeInsets.only(left: 12),
+                  child: Text('Error loading categories'),
+                ),
+                data: (categoriesList) {
+                  return ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    itemCount: categoriesList.length,
+                    itemBuilder: (context, index) {
+                      final category = categoriesList[index];
+                      final slug = category['slug']!;
+                      final name = category['name']!;
+                      final isSelected = currentCategory == slug;
 
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: ChoiceChip(
-                        label: Text(name),
-                        selected: isSelected,
-                        selectedColor: Colors.teal,
-                        labelStyle: TextStyle(
-                          color: isSelected ? Colors.white : Colors.black87,
-                          fontWeight: isSelected
-                              ? FontWeight.bold
-                              : FontWeight.normal,
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: ChoiceChip(
+                          label: Text(name),
+                          selected: isSelected,
+                          selectedColor: Colors.teal,
+                          labelStyle: TextStyle(
+                            color: isSelected ? Colors.white : Colors.black87,
+                            fontWeight: isSelected
+                                ? FontWeight.bold
+                                : FontWeight.normal,
+                          ),
+                          onSelected: (selected) {
+                            if (selected) {
+                              ref
+                                      .read(selectedCategoryProvider.notifier)
+                                      .state =
+                                  slug;
+                            }
+                          },
                         ),
-                        onSelected: (selected) {
-                          if (selected) {
-                            ref.read(selectedCategoryProvider.notifier).state =
-                                slug;
-                          }
-                        },
-                      ),
-                    );
-                  },
-                );
-              },
+                      );
+                    },
+                  );
+                },
+              ),
             ),
-          ),
-          const SizedBox(height: 10),
+            const SizedBox(height: 10), // Category ရှိမှသာ Space ပေးမည်
+          ],
 
           Expanded(
             child: productsAsync.when(
@@ -270,7 +262,7 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
                 }
 
                 return RefreshIndicator(
-                  color: Colors.teal, // Loading စက်ဝိုင်းအရောင်
+                  color: Colors.teal,
                   onRefresh: () async {
                     ref.invalidate(productsProvider);
 

@@ -6,16 +6,18 @@ import 'package:riverpod_test/features/favorites/providers/favorites_provider.da
 import 'package:riverpod_test/features/products/models/product_model.dart';
 
 class ProductDetailScreen extends ConsumerWidget {
-  final ProductModel product;
-
-  const ProductDetailScreen({super.key, required this.product});
+  const ProductDetailScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final product = ModalRoute.of(context)!.settings.arguments as ProductModel;
     final favoritesAsync = ref.watch(favoritesProvider);
     final favoriteList = favoritesAsync.value ?? [];
     final isFavorite = favoriteList.any((item) => item.id == product.id);
     final cartNotifier = ref.read(cartProvider.notifier);
+    final isInCart = ref
+        .watch(cartProvider)
+        .any((item) => item.product.id == product.id);
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -98,7 +100,6 @@ class ProductDetailScreen extends ConsumerWidget {
                       ),
                       const SizedBox(height: 16),
 
-                      // Product Title နာမည်
                       Text(
                         product.title,
                         style: const TextStyle(
@@ -153,11 +154,10 @@ class ProductDetailScreen extends ConsumerWidget {
                       ),
 
                       const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 20),
+                        padding: EdgeInsets.symmetric(vertical: 30),
                         child: Divider(color: Colors.black12, height: 1),
                       ),
 
-                      // Description အကျဉ်း
                       const Text(
                         'Description',
                         style: TextStyle(
@@ -187,7 +187,7 @@ class ProductDetailScreen extends ConsumerWidget {
             left: 0,
             right: 0,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
               decoration: BoxDecoration(
                 color: Colors.white,
                 boxShadow: [
@@ -202,7 +202,6 @@ class ProductDetailScreen extends ConsumerWidget {
               child: SafeArea(
                 child: Row(
                   children: [
-                    // အသည်းပုံ (Wishlist) ခလုတ်လေး
                     Container(
                       decoration: BoxDecoration(
                         border: Border.all(color: Colors.grey[200]!),
@@ -236,33 +235,55 @@ class ProductDetailScreen extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(width: 16),
-
-                    // Add to Cart ခလုတ်ကြီး
                     Expanded(
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.teal,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          backgroundColor: isInCart
+                              ? Colors.red.shade50
+                              : Colors.teal,
+                          foregroundColor: isInCart
+                              ? Colors.red.shade700
+                              : Colors.white,
+                          side: isInCart
+                              ? BorderSide(color: Colors.red.shade200)
+                              : BorderSide.none,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
+                            borderRadius: BorderRadius.circular(8),
                           ),
-                          elevation: 0,
                         ),
                         onPressed: () {
-                          cartNotifier.addToCart(product);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('${product.title} added to cart!'),
-                              behavior: SnackBarBehavior.floating,
-                              backgroundColor: Colors.teal,
-                            ),
-                          );
+                          if (isInCart) {
+                            cartNotifier.removeFromCart(product.id);
+
+                            ScaffoldMessenger.of(context).clearSnackBars();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  '${product.title} removed from cart!',
+                                ),
+                                behavior: SnackBarBehavior.floating,
+                                backgroundColor: Colors.redAccent,
+                              ),
+                            );
+                          } else {
+                            cartNotifier.addToCart(product);
+
+                            ScaffoldMessenger.of(context).clearSnackBars();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  '${product.title} added to cart!',
+                                ),
+                                behavior: SnackBarBehavior.floating,
+                                backgroundColor: Colors.teal,
+                              ),
+                            );
+                          }
                         },
-                        child: const Text(
-                          'Add to Cart',
-                          style: TextStyle(
-                            fontSize: 16,
+                        child: Text(
+                          isInCart ? 'Remove from Cart' : 'Add to Cart',
+                          style: const TextStyle(
+                            fontSize: 14,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
