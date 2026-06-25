@@ -28,12 +28,7 @@ class ProductGridItem extends ConsumerWidget {
       child: InkWell(
         onTap: () {
           FocusManager.instance.primaryFocus?.unfocus();
-          Navigator.pushNamed(
-            context,
-            '/product-detail',
-            arguments:
-                product,
-          );
+          Navigator.pushNamed(context, '/product-detail', arguments: product);
         },
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -176,7 +171,6 @@ class ProductGridItem extends ConsumerWidget {
                     ),
                     const SizedBox(height: 6),
 
-                    // Add to Cart Button
                     SizedBox(
                       width: double.infinity,
                       height: 36,

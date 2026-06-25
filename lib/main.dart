@@ -23,6 +23,7 @@ void main() async {
   }
 
   // Open your favorites box
+  await Hive.openBox('user_cart_box');
   await Hive.openBox<ProductModel>('products_box');
   await Hive.openBox('user_favorites_box');
   await Hive.openBox('authBox');

@@ -45,7 +45,8 @@ class FavoritesScreen extends ConsumerWidget {
             ),
             itemCount: favoriteList.length,
             itemBuilder: (context, index) {
-              return ProductGridItem(product: favoriteList[index]);
+              final reverseIndex = favoriteList.length - 1 - index;
+              return ProductGridItem(product: favoriteList[reverseIndex]);
             },
           );
         },

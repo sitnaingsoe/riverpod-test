@@ -59,7 +59,7 @@ class CartScreen extends ConsumerWidget {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               IconButton(
-                                onPressed: () => cartNotifier.updataQuantity(
+                                onPressed: () => cartNotifier.updateQuantity(
                                   item.product.id,
                                   false,
                                 ),
@@ -77,7 +77,7 @@ class CartScreen extends ConsumerWidget {
                               ),
                               IconButton(
                                 onPressed: () {
-                                  cartNotifier.updataQuantity(
+                                  cartNotifier.updateQuantity(
                                     item.product.id,
                                     true,
                                   );
@@ -219,6 +219,7 @@ class CartScreen extends ConsumerWidget {
                                                                 ),
                                                             decoration: BoxDecoration(
                                                               color: Colors.teal
+                                                                  // ignore: deprecated_member_use
                                                                   .withOpacity(
                                                                     0.1,
                                                                   ),
@@ -249,8 +250,6 @@ class CartScreen extends ConsumerWidget {
                                                         ],
                                                       ),
                                                       const Divider(height: 30),
-
-                                                      // 📞 ၁။ ဖုန်းနံပါတ် ထည့်ရန် (တန်ဖိုး စစ်ဆေးစနစ် ပါဝင်သည်)
                                                       const Text(
                                                         'Contact Information',
                                                         style: TextStyle(
@@ -305,7 +304,8 @@ class CartScreen extends ConsumerWidget {
                                                       DropdownButtonFormField<
                                                         String
                                                       >(
-                                                        value: selectedRegion,
+                                                        initialValue:
+                                                            selectedRegion,
                                                         hint: const Text(
                                                           'Select State / Region',
                                                         ),
@@ -343,7 +343,6 @@ class CartScreen extends ConsumerWidget {
                                                         height: 12,
                                                       ),
 
-                                                      // 🏠 ၃။ အိမ်အမှတ်၊ လမ်း၊ မြို့နယ် အသေးစိတ်ရိုက်ရန် TextField
                                                       TextFormField(
                                                         controller:
                                                             detailedAddressController,
