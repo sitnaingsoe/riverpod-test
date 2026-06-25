@@ -35,8 +35,9 @@ class ProductService {
       final response = await _dio.get(
         'https://dummyjson.com/products',
         queryParameters: {
-          'limit': limit, 'skip': skip,
-          'select': _productFields, // 👈 Limits data to your model fields
+          'limit': limit,
+          'skip': skip,
+          'select': _productFields,
         },
       );
 
@@ -75,13 +76,19 @@ class ProductService {
     }
   }
 
-  Future<List<ProductModel>> fetchProductsByCategory(
-    String categorySlug,
-  ) async {
+  Future<List<ProductModel>> fetchProductsByCategory({
+    required String categorySlug,
+    required int limit,
+    required int skip,
+  }) async {
     try {
       final response = await _dio.get(
         'https://dummyjson.com/products/category/$categorySlug',
-        queryParameters: {'select': _productFields},
+        queryParameters: {
+          'limit': limit,
+          'skip': skip,
+          'select': _productFields,
+        },
       );
       if (response.statusCode == 200) {
         return await compute(

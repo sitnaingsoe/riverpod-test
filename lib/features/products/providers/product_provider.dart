@@ -28,7 +28,9 @@ class ProductNotifier extends AsyncNotifier<List<ProductModel>> {
     _hasMoreData = true;
     _allProducts.clear();
 
-    ref.read(productErrorProvider.notifier).state = null;
+    Future.microtask(() {
+      ref.read(productErrorProvider.notifier).state = null;
+    });
 
     final service = ProductService();
 
@@ -40,8 +42,11 @@ class ProductNotifier extends AsyncNotifier<List<ProductModel>> {
       }
 
       if (selectedCategory != 'all') {
-        _allProducts = await service.fetchProductsByCategory(selectedCategory);
-        _hasMoreData = false;
+        _allProducts = await service.fetchProductsByCategory(
+          categorySlug: selectedCategory,
+          limit: _limit,
+          skip: _skip,
+        );
         return _allProducts;
       }
 
@@ -59,9 +64,12 @@ class ProductNotifier extends AsyncNotifier<List<ProductModel>> {
       return _allProducts;
     } catch (e) {
       _isLoadingMore = false;
-      ref.read(productErrorProvider.notifier).state = 'Failed to sync data.';
 
-      throw e;
+      Future.microtask(() {
+        ref.read(productErrorProvider.notifier).state = 'Failed to sync data.';
+      });
+
+      rethrow;
     }
   }
 
@@ -69,7 +77,7 @@ class ProductNotifier extends AsyncNotifier<List<ProductModel>> {
     final searchQuery = ref.read(productSearchQueryProvider);
     final selectedCategory = ref.read(selectedCategoryProvider);
 
-    if (searchQuery.isNotEmpty || selectedCategory != 'all') return;
+    if (searchQuery.isNotEmpty) return;
     if (_isLoadingMore || !_hasMoreData) return;
 
     final connectivityResult = await Connectivity().checkConnectivity();
@@ -93,10 +101,16 @@ class ProductNotifier extends AsyncNotifier<List<ProductModel>> {
 
     try {
       final service = ProductService();
-      final newProducts = await service.fetchProducts(
-        limit: _limit,
-        skip: _skip,
-      );
+      final List<ProductModel> newProducts;
+      if (selectedCategory != 'all') {
+        newProducts = await service.fetchProductsByCategory(
+          categorySlug: selectedCategory,
+          limit: _limit,
+          skip: _skip,
+        );
+      } else {
+        newProducts = await service.fetchProducts(limit: _limit, skip: _skip);
+      }
 
       if (newProducts.isEmpty) {
         _hasMoreData = false;
@@ -120,7 +134,6 @@ class ProductNotifier extends AsyncNotifier<List<ProductModel>> {
 final productSearchQueryProvider = StateProvider<String>((ref) => '');
 final selectedCategoryProvider = StateProvider<String>((ref) => 'all');
 final productErrorProvider = StateProvider<String?>((ref) => null);
-
 final productsProvider =
     AsyncNotifierProvider<ProductNotifier, List<ProductModel>>(
       ProductNotifier.new,
@@ -137,9 +150,7 @@ final categoriesProvider = FutureProvider<List<Map<String, String>>>((
       ...apiCategories,
     ];
   } catch (e) {
-    return [
-      {'slug': 'all', 'name': 'All'},
-    ];
+    return [];
   }
 });
 

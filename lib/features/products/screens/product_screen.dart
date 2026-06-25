@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_test/features/auth/providers/auth_provider.dart';
 import 'package:riverpod_test/features/products/models/product_model.dart';
 import 'package:riverpod_test/features/products/providers/product_provider.dart';
+import 'package:riverpod_test/features/products/widgets/error_screen.dart';
 import 'dart:async';
 
 import 'package:riverpod_test/features/products/widgets/product_card.dart';
@@ -17,6 +18,7 @@ class ProductsScreen extends ConsumerStatefulWidget {
 
 class _ProductsScreenState extends ConsumerState<ProductsScreen> {
   Timer? _debounce;
+  bool showError = false;
   final ScrollController _scrollController = ScrollController();
   final FocusNode _searchFocusNode = FocusNode();
   final TextEditingController _searchController = TextEditingController();
@@ -28,21 +30,20 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
 
   void _onScroll() {
     final currentSearch = ref.read(productSearchQueryProvider);
-    final currentCategory = ref.read(selectedCategoryProvider);
     final paginationError = ref.read(productErrorProvider);
     final notifier = ref.read(productsProvider.notifier);
 
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent - 200) {
-      if (currentSearch.isNotEmpty || currentCategory != 'all') return;
+      if (currentSearch.isNotEmpty) return;
 
       if (notifier.isLoadingMore ||
           paginationError != null ||
           !notifier.hasMoreData) {
         return;
       }
-
       notifier.loadMoreProducts();
+      showError = true;
     }
   }
 
@@ -103,7 +104,6 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () {
-              // 🔥 ၁။ Logout ခလုတ်နှိပ်လိုက်ရင် Confirmation Dialog ကို အရင်ပြမယ်
               showDialog(
                 context: context,
                 builder: (BuildContext context) {
@@ -124,9 +124,7 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
                     actions: [
                       TextButton(
                         onPressed: () {
-                          Navigator.of(
-                            context,
-                          ).pop(); // Dialog Box ကို ပိတ်လိုက်မယ်
+                          Navigator.of(context).pop();
                         },
                         child: const Text(
                           'Cancel',
@@ -248,14 +246,21 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
                 },
               ),
             ),
-            const SizedBox(height: 10), // Category ရှိမှသာ Space ပေးမည်
+            const SizedBox(height: 10),
           ],
 
           Expanded(
             child: productsAsync.when(
               skipLoadingOnRefresh: false,
               loading: () => const ProductGridSkeleton(),
-              error: (err, stack) => Center(child: Text('Error: $err')),
+              error: (err, stack) => ErrorPlaceholder(
+                errorMessage: err.toString(),
+                onTryAgain: () async {
+                  ScaffoldMessenger.of(context).clearSnackBars();
+                  ref.invalidate(productsProvider);
+                  ref.invalidate(categoriesProvider);
+                },
+              ),
               data: (products) {
                 if (products.isEmpty) {
                   return const Center(child: Text('No products available.'));
@@ -264,6 +269,7 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
                 return RefreshIndicator(
                   color: Colors.teal,
                   onRefresh: () async {
+                    showError = false;
                     ref.invalidate(productsProvider);
 
                     ref.invalidate(categoriesProvider);
@@ -294,7 +300,7 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
           ),
 
           // Pagination Error Panel
-          if (paginationError != null)
+          if (paginationError != null && showError)
             SafeArea(
               top: false,
               child: Container(
