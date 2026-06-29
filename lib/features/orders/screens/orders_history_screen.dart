@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import 'package:riverpod_test/features/orders/providers/orders_provider.dart';
 
 class OrdersHistoryScreen extends ConsumerWidget {
@@ -11,107 +10,75 @@ class OrdersHistoryScreen extends ConsumerWidget {
     final orders = ref.watch(ordersProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Order History'),
-        backgroundColor: Colors.teal,
-        foregroundColor: Colors.white,
-      ),
+      appBar: AppBar(title: const Text('📋 Order History'), centerTitle: true),
       body: orders.isEmpty
-          ? const Center(
+          ? Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(
-                    Icons.receipt_long_outlined,
+                    Icons.shopping_bag_outlined,
                     size: 64,
-                    color: Colors.grey,
+                    color: Colors.grey[400],
                   ),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   Text(
-                    'No orders found yet!',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.grey,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    'No orders found',
+                    style: TextStyle(fontSize: 18, color: Colors.grey[600]),
                   ),
                 ],
               ),
             )
           : ListView.builder(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(16),
               itemCount: orders.length,
               itemBuilder: (context, index) {
                 final order = orders[index];
 
                 return Card(
+                  margin: const EdgeInsets.only(bottom: 16),
                   elevation: 2,
-                  margin: const EdgeInsets.symmetric(vertical: 8),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: ExpansionTile(
-                    leading: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        // ignore: deprecated_member_use
-                        color: _getStatusColor(order.status).withOpacity(0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        _getStatusIcon(order.status),
-                        color: _getStatusColor(order.status),
-                      ),
+                    leading: const CircleAvatar(
+                      backgroundColor: Colors.greenAccent,
+                      child: Icon(Icons.check, color: Colors.black),
                     ),
                     title: Text(
-                      'Order ID: #${order.id}',
+                      'Order ID: ${order.id}',
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                     subtitle: Text(
-                      'Date: ${DateFormat('dd MMM yyyy, hh:mm a').format(order.orderDate)}',
-                      style: const TextStyle(fontSize: 12, color: Colors.grey),
-                    ),
-                    trailing: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          '\$${order.totalAmount.toStringAsFixed(2)}',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.teal,
-                            fontSize: 16,
-                          ),
-                        ),
-                        Text(
-                          order.status,
-                          style: TextStyle(
-                            color: _getStatusColor(order.status),
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
+                      'Date: ${order.orderDate.toString().split('.')[0]}\nTotal: \$${order.totalAmount}',
+                      style: TextStyle(color: Colors.grey[600], height: 1.5),
                     ),
                     children: [
-                      const Divider(height: 1),
+                      const Divider(),
                       Padding(
-                        padding: const EdgeInsets.all(12),
+                        padding: const EdgeInsets.all(16.0),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text(
-                              'Items Ordered:',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.grey,
-                              ),
+                              '📍 Shipping Details',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 4),
+                            Text('Address: ${order.shippingAddress}'),
+                            Text('Phone: ${order.phoneNumber}'),
+                            const Divider(height: 24),
+                            const Text(
+                              '🛒 Ordered Items',
+                              style: TextStyle(fontWeight: FontWeight.bold),
                             ),
                             const SizedBox(height: 8),
+                            // Items List
                             ...order.items.map(
                               (item) => Padding(
                                 padding: const EdgeInsets.symmetric(
-                                  vertical: 4,
+                                  vertical: 4.0,
                                 ),
                                 child: Row(
                                   mainAxisAlignment:
@@ -119,38 +86,19 @@ class OrdersHistoryScreen extends ConsumerWidget {
                                   children: [
                                     Expanded(
                                       child: Text(
-                                        '${item.product.title} (x${item.quantity})',
-                                        maxLines: 1,
+                                        '• ${item.product.title}',
                                         overflow: TextOverflow.ellipsis,
                                       ),
                                     ),
                                     Text(
-                                      '\$${(item.product.price * item.quantity).toStringAsFixed(2)}',
+                                      'x${item.quantity}',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   ],
                                 ),
                               ),
-                            ),
-                            const Divider(height: 20),
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Icon(
-                                  Icons.location_on_outlined,
-                                  size: 18,
-                                  color: Colors.grey,
-                                ),
-                                const SizedBox(width: 4),
-                                Expanded(
-                                  child: Text(
-                                    'Shipping Address: ${order.shippingAddress}',
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                      color: Colors.black87,
-                                    ),
-                                  ),
-                                ),
-                              ],
                             ),
                           ],
                         ),
@@ -161,37 +109,5 @@ class OrdersHistoryScreen extends ConsumerWidget {
               },
             ),
     );
-  }
-
-  // 💡 Order Status အလိုက် အရောင် ခွဲခြားပေးမည့် Helper Function
-  Color _getStatusColor(String status) {
-    switch (status.toLowerCase()) {
-      case 'pending':
-        return Colors.orange;
-      case 'shipped':
-        return Colors.blue;
-      case 'delivered':
-        return Colors.green;
-      case 'cancelled':
-        return Colors.red;
-      default:
-        return Colors.grey;
-    }
-  }
-
-  // 💡 Order Status အလိုက် Icon ခွဲခြားပေးမည့် Helper Function
-  IconData _getStatusIcon(String status) {
-    switch (status.toLowerCase()) {
-      case 'pending':
-        return Icons.hourglass_empty_rounded;
-      case 'shipped':
-        return Icons.local_shipping_outlined;
-      case 'delivered':
-        return Icons.check_circle_outline_rounded;
-      case 'cancelled':
-        return Icons.cancel_outlined;
-      default:
-        return Icons.receipt_long_outlined;
-    }
   }
 }

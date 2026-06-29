@@ -3,12 +3,38 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_test/features/cart/providers/cart_provider.dart';
 import 'package:riverpod_test/features/orders/providers/orders_provider.dart';
+import 'dart:developer' as developer;
 
 class CartScreen extends ConsumerWidget {
   const CartScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final formKey = GlobalKey<FormState>();
+    final phoneController = TextEditingController(text: '0993323232');
+    final detailedAddressController = TextEditingController(
+      text: ' Room 4B, Building 12, Mahabandoola Road, Latha Township',
+    );
+
+    final List<String> regions = [
+      'Yangon',
+      'Mandalay',
+      'Naypyidaw',
+      'Bago',
+      'Sagaing',
+      'Magway',
+      'Ayeyarwady',
+      'Thanintharyi',
+      'Kachin',
+      'Kayah',
+      'Kayin',
+      'Chin',
+      'Mon',
+      'Rakhine',
+      'Shan',
+    ];
+
+    String? selectedRegion;
     final cartItems = ref.watch(cartProvider);
     final cartNotifier = ref.read(cartProvider.notifier);
     return Scaffold(
@@ -149,31 +175,6 @@ class CartScreen extends ConsumerWidget {
                         onPressed: cartItems.isEmpty
                             ? null
                             : () {
-                                final formKey = GlobalKey<FormState>();
-                                final phoneController = TextEditingController();
-                                final detailedAddressController =
-                                    TextEditingController();
-
-                                final List<String> regions = [
-                                  'Yangon',
-                                  'Mandalay',
-                                  'Naypyidaw',
-                                  'Bago',
-                                  'Sagaing',
-                                  'Magway',
-                                  'Ayeyarwady',
-                                  'Thanintharyi',
-                                  'Kachin',
-                                  'Kayah',
-                                  'Kayin',
-                                  'Chin',
-                                  'Mon',
-                                  'Rakhine',
-                                  'Shan',
-                                ];
-
-                                String? selectedRegion;
-
                                 showModalBottomSheet(
                                   context: context,
                                   isScrollControlled: true,
@@ -381,13 +382,65 @@ class CartScreen extends ConsumerWidget {
                                                                 ),
                                                           ),
                                                         ),
-                                                        onPressed: () async {
+                                                        onPressed: () {
+                                                          // 💡 စစ်ဆေးချက် ၁ - ခလုတ် တကယ် နှိပ်မိ/မမိ အရင်ဆုံး Log ထုတ်ကြည့်မယ်
+                                                          developer.log(
+                                                            '🔘 OnPressed Button Clicked!',
+                                                            name: 'SHOP_DEBUG',
+                                                          );
+
                                                           if (formKey
-                                                              .currentState!
-                                                              .validate()) {
+                                                                  .currentState ==
+                                                              null) {
+                                                            developer.log(
+                                                              '❌ Error: formKey.currentState က null ဖြစ်နေပါတယ်!',
+                                                              name:
+                                                                  'SHOP_DEBUG',
+                                                            );
+                                                            return;
+                                                          }
+
+                                                          // 💡 စစ်ဆေးချက် ၂ - Validation အောင်မြင်လား၊ ကျရှုံးလား စစ်မယ်
+                                                          final isValid =
+                                                              formKey
+                                                                  .currentState!
+                                                                  .validate();
+                                                          developer.log(
+                                                            '📝 Form Validation Result: $isValid',
+                                                            name: 'SHOP_DEBUG',
+                                                          );
+
+                                                          if (isValid) {
+                                                            final currentCartItems =
+                                                                ref.read(
+                                                                  cartProvider,
+                                                                );
+                                                            developer.log(
+                                                              '🛒 Cart Items Count to Order: ${currentCartItems.length}',
+                                                              name:
+                                                                  'SHOP_DEBUG',
+                                                            );
+
+                                                            if (currentCartItems
+                                                                .isEmpty) {
+                                                              developer.log(
+                                                                '⚠️ Cart က အလွတ်ကြီးဖြစ်နေလို့ Order တင်လို့မရပါ',
+                                                                name:
+                                                                    'SHOP_DEBUG',
+                                                              );
+                                                              return;
+                                                            }
+
                                                             final fullAddress =
                                                                 "$selectedRegion, ${detailedAddressController.text}";
+                                                            final totalPrice = ref
+                                                                .read(
+                                                                  cartProvider
+                                                                      .notifier,
+                                                                )
+                                                                .totalPrice;
 
+                                                            // Order လှမ်းတင်မယ်
                                                             ref
                                                                 .read(
                                                                   ordersProvider
@@ -395,13 +448,9 @@ class CartScreen extends ConsumerWidget {
                                                                 )
                                                                 .placeOrder(
                                                                   cartItems:
-                                                                      cartItems,
-                                                                  total: ref
-                                                                      .read(
-                                                                        cartProvider
-                                                                            .notifier,
-                                                                      )
-                                                                      .totalPrice,
+                                                                      currentCartItems,
+                                                                  total:
+                                                                      totalPrice,
                                                                   address:
                                                                       fullAddress,
                                                                   phone:
@@ -418,25 +467,27 @@ class CartScreen extends ConsumerWidget {
                                                             ).showSnackBar(
                                                               SnackBar(
                                                                 content: Text(
-                                                                  '🎉 Order Placed to $fullAddress successfully!',
+                                                                  '🎉 Order Placed successfully!',
                                                                 ),
                                                                 backgroundColor:
                                                                     Colors
                                                                         .green,
-                                                                duration:
-                                                                    const Duration(
-                                                                      seconds:
-                                                                          3,
-                                                                    ),
                                                               ),
                                                             );
+
+                                                            ref
+                                                                .read(
+                                                                  cartProvider
+                                                                      .notifier,
+                                                                )
+                                                                .clearCart();
+                                                          } else {
+                                                            developer.log(
+                                                              '❌ Form Validation Failed! (စာရိုက်ရမယ့် TextFields တွေထဲမှာ တစ်ခုခု လိုနေပါတယ်)',
+                                                              name:
+                                                                  'SHOP_DEBUG',
+                                                            );
                                                           }
-                                                          ref
-                                                              .read(
-                                                                cartProvider
-                                                                    .notifier,
-                                                              )
-                                                              .clearCart();
                                                         },
                                                         child: const Text(
                                                           'Confirm & Place Order',
