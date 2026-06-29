@@ -1,8 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_test/features/auth/providers/auth_provider.dart';
 import 'package:riverpod_test/features/cart/models/cart_item_model.dart';
-import 'package:riverpod_test/features/cart/providers/cart_provider.dart';
 import 'package:riverpod_test/features/orders/models/order_model.dart';
-import 'package:riverpod_test/features/profile/providers/profile_provider.dart';
 
 final Map<String, List<OrderModel>> _orders = {};
 
@@ -15,17 +14,23 @@ class OrdersNotifier extends Notifier<List<OrderModel>> {
 
   @override
   List<OrderModel> build() {
-    final authState = ref.watch(profileProvider);
+    ref.keepAlive();
+
+    final authState = ref.watch(authProvider);
 
     return authState.maybeWhen(
       data: (user) {
         if (user != null) {
           _userId = user.id.toString();
-          return _orders[_userId!] ??= [];
+          return List.from(_orders[_userId!] ??= []);
         }
-        return [];
+        _userId = "GUEST_USER";
+        return List.from(_orders[_userId!] ??= []);
       },
-      orElse: () => [],
+      orElse: () {
+        _userId = "GUEST_USER";
+        return List.from(_orders[_userId!] ??= []);
+      },
     );
   }
 
@@ -35,7 +40,11 @@ class OrdersNotifier extends Notifier<List<OrderModel>> {
     required String address,
     required String phone,
   }) {
-    if (_userId == null || cartItems.isEmpty) return;
+    _userId ??= "GUEST_USER";
+
+    if (cartItems.isEmpty) {
+      return;
+    }
 
     final newOrder = OrderModel(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -50,7 +59,5 @@ class OrdersNotifier extends Notifier<List<OrderModel>> {
     final updatedList = [newOrder, ...state];
     _orders[_userId!] = updatedList;
     state = updatedList;
-
-    ref.read(cartProvider.notifier).clearCart();
   }
 }
