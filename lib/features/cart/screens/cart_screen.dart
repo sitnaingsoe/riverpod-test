@@ -268,14 +268,13 @@ class CartScreen extends ConsumerWidget {
                                                           labelText:
                                                               'Phone Number',
                                                           hintText:
-                                                              '09xxxxxxxxx',
+                                                              '09x1axxxxxxxx',
                                                           prefixIcon: Icon(
                                                             Icons.phone_android,
                                                           ),
                                                           border:
                                                               OutlineInputBorder(),
                                                         ),
-                                                        // မြန်မာဖုန်းနံပါတ်အတွက် ရှစ်လုံးမှ ဆယ့်တစ်လုံးကြား ရှိမရှိ သေချာစစ်ဆေးခြင်း
                                                         validator: (val) {
                                                           if (val == null ||
                                                               val.isEmpty) {
@@ -328,7 +327,6 @@ class CartScreen extends ConsumerWidget {
                                                           );
                                                         }).toList(),
                                                         onChanged: (newValue) {
-                                                          // StatefulBuilder ၏ state ကို ပြောင်းလဲစေခြင်း
                                                           setModalState(() {
                                                             selectedRegion =
                                                                 newValue;
@@ -353,7 +351,7 @@ class CartScreen extends ConsumerWidget {
                                                           hintText:
                                                               'e.g., Room 4B, Building 12, Mahabandoola Road, Latha Township',
                                                           alignLabelWithHint:
-                                                              true, // maxLines များနေလျှင် Label ကို အပေါ်တင်ပေးရန်
+                                                              true,
                                                           border:
                                                               OutlineInputBorder(),
                                                         ),
@@ -367,7 +365,6 @@ class CartScreen extends ConsumerWidget {
                                                         height: 24,
                                                       ),
 
-                                                      // 🛒 အော်ဒါ အတည်ပြုရန် ခလုတ်
                                                       ElevatedButton(
                                                         style: ElevatedButton.styleFrom(
                                                           backgroundColor:
@@ -384,15 +381,13 @@ class CartScreen extends ConsumerWidget {
                                                                 ),
                                                           ),
                                                         ),
-                                                        onPressed: () {
+                                                        onPressed: () async {
                                                           if (formKey
                                                               .currentState!
                                                               .validate()) {
-                                                            // စာသားများကို ပေါင်းစပ်ပြီး တိကျသော လိပ်စာတစ်ခု တည်ဆောက်ခြင်း
                                                             final fullAddress =
                                                                 "$selectedRegion, ${detailedAddressController.text}";
 
-                                                            // Provider ထံသို့ ဒေတာလှမ်းပို့ခြင်း
                                                             ref
                                                                 .read(
                                                                   ordersProvider
@@ -436,6 +431,12 @@ class CartScreen extends ConsumerWidget {
                                                               ),
                                                             );
                                                           }
+                                                          ref
+                                                              .read(
+                                                                cartProvider
+                                                                    .notifier,
+                                                              )
+                                                              .clearCart();
                                                         },
                                                         child: const Text(
                                                           'Confirm & Place Order',

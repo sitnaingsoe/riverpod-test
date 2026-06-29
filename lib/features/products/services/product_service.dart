@@ -1,12 +1,27 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart'; // 💡 compute သုံးရန် ထည့်သွင်းပါ
 import 'package:dio/dio.dart';
+import 'package:http/http.dart' as http;
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 import 'package:riverpod_test/features/products/models/product_model.dart';
 
 class ProductService {
   final Dio _dio;
 
-  ProductService() : _dio = Dio() {
+  ProductService()
+    : _dio = Dio(
+        BaseOptions(
+          baseUrl: 'https://dummyjson.com',
+          connectTimeout: const Duration(seconds: 10),
+          receiveTimeout: const Duration(seconds: 10),
+          sendTimeout: const Duration(seconds: 10),
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+        ),
+      ) {
     _dio.interceptors.add(
       PrettyDioLogger(
         requestHeader: true,
@@ -122,5 +137,16 @@ class ProductService {
     } catch (e) {
       throw 'Category Fetch Error';
     }
+  }
+
+  Future<List<int>> fetchRecommendations(int productId) async {
+    final response = await http.get(
+      Uri.parse('http://localhost:8000/api/recommendations/$productId'),
+    );
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      return List<int>.from(data['recommendations']);
+    }
+    return [];
   }
 }

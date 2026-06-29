@@ -4,6 +4,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:riverpod_test/features/auth/models/auth_model.dart';
 import 'package:riverpod_test/features/favorites/models/favorite_product_model.dart';
 import 'package:riverpod_test/features/favorites/screens/favorites_screen.dart';
+import 'package:riverpod_test/features/orders/screens/orders_history_screen.dart';
 import 'package:riverpod_test/features/products/models/product_model.dart';
 import 'package:riverpod_test/features/auth/screens/login.dart'; // သင့်ဖိုင်လမ်းကြောင်းအတိုင်း ပြင်ပါ
 import 'package:riverpod_test/features/auth/screens/splash_screen.dart';
@@ -50,6 +51,7 @@ class MyApp extends ConsumerWidget {
         '/home': (context) => const BottomNavigationScreen(),
         '/favorite': (context) => const FavoritesScreen(),
         '/product-detail': (context) => const ProductDetailScreen(),
+        '/history-order': (context) => const OrdersHistoryScreen(),
       },
     );
   }

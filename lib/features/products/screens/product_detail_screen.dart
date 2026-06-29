@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_test/features/cart/providers/cart_provider.dart';
 import 'package:riverpod_test/features/favorites/providers/favorites_provider.dart';
 import 'package:riverpod_test/features/products/models/product_model.dart';
+import 'package:riverpod_test/features/products/providers/recommendation_notifier.dart';
 
 class ProductDetailScreen extends ConsumerWidget {
   const ProductDetailScreen({super.key});
@@ -15,6 +16,7 @@ class ProductDetailScreen extends ConsumerWidget {
     final favoriteList = favoritesAsync.value ?? [];
     final isFavorite = favoriteList.any((item) => item.id == product.id);
     final cartNotifier = ref.read(cartProvider.notifier);
+    final recommendationsAsync = ref.watch(recommendationProvider(product.id));
     final isInCart = ref
         .watch(cartProvider)
         .any((item) => item.product.id == product.id);
@@ -40,7 +42,7 @@ class ProductDetailScreen extends ConsumerWidget {
                 // ၁။ Product Image Box
                 Container(
                   width: double.infinity,
-                  height: 300,
+                  height: 200,
                   color: Colors.grey[100],
                   child: CachedNetworkImage(
                     imageUrl: product.thumbnail.isNotEmpty
@@ -71,7 +73,6 @@ class ProductDetailScreen extends ConsumerWidget {
                   ),
                 ),
 
-                // ၂။ Product Info Details
                 Padding(
                   padding: const EdgeInsets.all(20.0),
                   child: Column(
@@ -175,6 +176,134 @@ class ProductDetailScreen extends ConsumerWidget {
                           height: 1.6,
                         ),
                       ),
+
+                      const SizedBox(height: 30),
+                      const Text(
+                        'Recommended for You',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      recommendationsAsync.when(
+                        data: (recommendedProducts) =>
+                            recommendedProducts.isEmpty
+                            ? const Text('No recommendations found.')
+                            : SizedBox(
+                                height: 220,
+                                child: ListView.builder(
+                                  scrollDirection: Axis.horizontal,
+                                  itemCount: recommendedProducts.length,
+                                  itemBuilder: (context, index) {
+                                    final item = recommendedProducts[index];
+                                    final cartItems = ref.watch(cartProvider);
+                                    final bool isInCart = cartItems.any(
+                                      (cartItem) =>
+                                          cartItem.product.id == item.id,
+                                    );
+                                    return Container(
+                                      width: 140,
+                                      margin: const EdgeInsets.only(right: 12),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Expanded(
+                                            child: Stack(
+                                              children: [
+                                                Container(
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.grey[100],
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          12,
+                                                        ),
+                                                    image: DecorationImage(
+                                                      image: NetworkImage(
+                                                        item.thumbnail,
+                                                      ),
+                                                      fit: BoxFit.cover,
+                                                    ),
+                                                  ),
+                                                ),
+                                                Positioned(
+                                                  right: 5,
+                                                  bottom: 5,
+                                                  child: CircleAvatar(
+                                                    backgroundColor:
+                                                        Colors.teal,
+                                                    radius: 18,
+                                                    child: IconButton(
+                                                      icon: Icon(
+                                                        isInCart
+                                                            ? Icons.check_circle
+                                                            : Icons
+                                                                  .add_shopping_cart,
+                                                        size: 18,
+                                                        color: Colors.white,
+                                                      ),
+                                                      onPressed: isInCart
+                                                          ? null
+                                                          : () {
+                                                              ref
+                                                                  .read(
+                                                                    cartProvider
+                                                                        .notifier,
+                                                                  )
+                                                                  .addToCart(
+                                                                    item,
+                                                                  );
+
+                                                              ScaffoldMessenger.of(
+                                                                context,
+                                                              ).clearSnackBars();
+                                                              ScaffoldMessenger.of(
+                                                                context,
+                                                              ).showSnackBar(
+                                                                SnackBar(
+                                                                  content: Text(
+                                                                    '${product.title} added to cart!',
+                                                                  ),
+                                                                  behavior:
+                                                                      SnackBarBehavior
+                                                                          .floating,
+                                                                  backgroundColor:
+                                                                      Colors
+                                                                          .teal,
+                                                                ),
+                                                              );
+                                                            },
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            item.title,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          Text(
+                                            '\$${item.price.toStringAsFixed(2)}',
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                        loading: () =>
+                            const Center(child: CircularProgressIndicator()),
+                        error: (err, stack) =>
+                            Text('Could not load recommendations: $err'),
+                      ),
                     ],
                   ),
                 ),
@@ -187,7 +316,7 @@ class ProductDetailScreen extends ConsumerWidget {
             left: 0,
             right: 0,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
                 color: Colors.white,
                 boxShadow: [
@@ -220,6 +349,7 @@ class ProductDetailScreen extends ConsumerWidget {
                           ScaffoldMessenger.of(context).clearSnackBars();
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
+                              behavior: SnackBarBehavior.fixed, // ✅ Full Width
                               content: Text(
                                 isFavorite
                                     ? '${product.title} removed from favorites!'
@@ -250,6 +380,7 @@ class ProductDetailScreen extends ConsumerWidget {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
                           ),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
                         ),
                         onPressed: () {
                           if (isInCart) {
@@ -261,8 +392,9 @@ class ProductDetailScreen extends ConsumerWidget {
                                 content: Text(
                                   '${product.title} removed from cart!',
                                 ),
-                                behavior: SnackBarBehavior.floating,
+                                behavior: SnackBarBehavior.fixed,
                                 backgroundColor: Colors.redAccent,
+                                duration: const Duration(seconds: 1),
                               ),
                             );
                           } else {
@@ -274,8 +406,9 @@ class ProductDetailScreen extends ConsumerWidget {
                                 content: Text(
                                   '${product.title} added to cart!',
                                 ),
-                                behavior: SnackBarBehavior.floating,
+                                behavior: SnackBarBehavior.fixed,
                                 backgroundColor: Colors.teal,
+                                duration: const Duration(seconds: 1),
                               ),
                             );
                           }

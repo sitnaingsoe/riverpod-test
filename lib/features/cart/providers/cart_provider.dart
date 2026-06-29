@@ -92,7 +92,8 @@ class CartNotifier extends Notifier<List<CartItemModel>> {
   }
 
   void clearCart() {
-    _saveAndEmitState([]);
+    final updatedList = <CartItemModel>[];
+    _saveAndEmitState(updatedList);
   }
 
   double get totalPrice {

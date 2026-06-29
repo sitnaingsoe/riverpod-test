@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:riverpod_test/features/auth/providers/auth_provider.dart';
 
 class ProfileScreen extends ConsumerWidget {
@@ -141,7 +140,7 @@ class ProfileScreen extends ConsumerWidget {
                         Icons.shopping_cart,
                         "Orders",
                         Colors.blue,
-                        () => context.push("/orders"),
+                        () => Navigator.pushNamed(context, "/history-order"),
                       ),
                       buildGridItem(
                         Icons.payment,

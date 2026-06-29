@@ -5,7 +5,6 @@ import 'package:riverpod_test/features/products/models/product_model.dart';
 import 'package:riverpod_test/features/products/providers/product_provider.dart';
 import 'package:riverpod_test/features/products/widgets/error_screen.dart';
 import 'dart:async';
-
 import 'package:riverpod_test/features/products/widgets/product_card.dart';
 import 'package:riverpod_test/features/products/widgets/product_skeleton.dart';
 
@@ -232,6 +231,7 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
                                 : FontWeight.normal,
                           ),
                           onSelected: (selected) {
+                            showError = false;
                             if (selected) {
                               ref
                                       .read(selectedCategoryProvider.notifier)
