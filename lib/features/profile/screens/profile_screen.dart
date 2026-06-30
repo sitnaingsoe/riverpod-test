@@ -210,9 +210,8 @@ class ProfileScreen extends ConsumerWidget {
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.teal,
-                      ), // 💡 အရောင် ထည့်ပေးထားပါတယ်
+                      ),
                       onPressed: () {
-                        // 🔥 Notifier ထဲက logout ကို လှမ်းခေါ်ခြင်း
                         showDialog(
                           context: context,
                           builder: (BuildContext context) {

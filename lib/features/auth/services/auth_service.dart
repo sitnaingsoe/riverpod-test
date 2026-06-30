@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:hive/hive.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
@@ -7,6 +8,7 @@ import 'package:riverpod_test/features/auth/models/auth_model.dart';
 
 class AuthService {
   final Dio _dio;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
   AuthService() : _dio = Dio() {
     _dio.interceptors.add(
@@ -23,41 +25,27 @@ class AuthService {
     );
   }
 
-  Future<AuthModel> login(String username, String password) async {
-    try {
-      final response = await _dio.post(
-        'https://dummyjson.com/auth/login',
-        data: {'username': username, 'password': password},
-      );
-
-      if (response.statusCode == 200) {
-        final authData = AuthModel.fromJson(response.data);
-        final authBox = Hive.box('authBox');
-
-        await authBox.put('current_user', authData);
-
-        return authData;
-      } else {
-        throw Exception('Failed to login');
-      }
-    } on DioException catch (e) {
-      String errorMessage = 'Login Fail';
-      if (e.response != null && e.response?.data != null) {
-        errorMessage = e.response?.data['message'] ?? errorMessage;
-      }
-      throw Exception(errorMessage);
-    }
-  }
-
   Future<bool> checkAndRefreshAuth() async {
     final authBox = Hive.box('authBox');
     final AuthModel? cachedUser = authBox.get('current_user');
-    if (cachedUser == null || cachedUser.accessToken.isEmpty) {
+    if (cachedUser == null) {
+      if (kDebugMode) {
+        print('ℹ️ [AuthService] No cached user found in Hive. Access Denied.');
+      }
+      return false;
+    }
+    if (_auth.currentUser != null) {
+      if (kDebugMode) print('✅ [AuthService] Firebase User Session is Active.');
+      return true;
+    }
+    if (cachedUser.accessToken.isEmpty) {
       if (kDebugMode) print('Do not Authorized');
       return false;
     }
+
     String accessToken = cachedUser.accessToken;
     final refreshToken = cachedUser.refreshToken;
+
     try {
       bool isTokenExpired = JwtDecoder.isExpired(accessToken);
       if (isTokenExpired) {
@@ -65,8 +53,8 @@ class AuthService {
 
         if (refreshToken.isNotEmpty) {
           final response = await _dio.post(
-            'https://dummyjson.com/auth/refresh', // သင့် API URL အတိုင်း ပြင်ရန်
-            data: {'refreshToken': refreshToken, 'expiresInMins': 30},
+            'https://dummyjson.com/auth/refresh',
+            data: {'refreshToken': refreshToken},
           );
 
           if (response.statusCode == 200) {
@@ -87,9 +75,9 @@ class AuthService {
             );
             await authBox.put('current_user', updatedUser);
             if (kDebugMode) {
-              print('✅ [AuthService] Token refreshed successfully!');
+              print('✅ [AuthService] API Token refreshed successfully!');
             }
-            return true; //
+            return true;
           } else {
             throw Exception('Failed to refresh token from API');
           }
@@ -97,11 +85,10 @@ class AuthService {
           throw Exception('Refresh token field is empty');
         }
       }
-      if (kDebugMode) print('✅ [AuthService] Access Token is still valid.');
+      if (kDebugMode) print('✅ [AuthService] API Access Token is still valid.');
       return true;
     } catch (e) {
       if (kDebugMode) print('❌ [AuthService] Session Expired or Error: $e');
-
       await authBox.delete('current_user');
       return false;
     }
@@ -112,4 +99,36 @@ class AuthService {
     await authBox.delete('current_user');
     await authBox.put('isLoggedIn', false);
   }
+
+  Future<UserCredential> firebaseLogin({
+    required String email,
+    required String password,
+  }) async {
+    return await _auth.signInWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+  }
+
+  Future<UserCredential> register({
+    required String email,
+    required String password,
+  }) async {
+    return await _auth.createUserWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+  }
+
+  Future<void> firebaselogout() async {
+    await _auth.signOut();
+    final authBox = Hive.box('authBox');
+    await authBox.delete(
+      'current_user',
+    ); // Firebase ထွက်ရင် Hive ထဲက ဒေတာပါ ရှင်းပေးခြင်း
+  }
+
+  User? get currentUser => _auth.currentUser;
+
+  Stream<User?> get authState => _auth.authStateChanges();
 }

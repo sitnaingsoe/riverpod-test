@@ -10,8 +10,8 @@ class LoginScreen extends ConsumerStatefulWidget {
 }
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
-  final _usernameController = TextEditingController(text: 'emilys');
-  final _passwordController = TextEditingController(text: 'emilyspass');
+  final _usernameController = TextEditingController();
+  final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
   @override
@@ -25,16 +25,27 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
 
-    ref.listen(authProvider, (previous, next) {
+    ref.listen<AsyncValue>(authProvider, (previous, next) {
       next.whenOrNull(
-        error: (err, stack) {
+        // ignore: non_constant_identifier_names, avoid_types_as_parameter_names
+        error: (error, StackTrace) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(
-                'Login failed: ${err.toString().replaceAll('Exception: ', '')}',
-              ),
+              content: Text('Email or Password incorrect'),
+              backgroundColor: Colors.red,
             ),
           );
+        },
+        data: (user) {
+          if (user != null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Login Successfull '),
+                backgroundColor: Colors.green,
+              ),
+            );
+            Navigator.pushReplacementNamed(context, '/home');
+          }
         },
       );
     });
@@ -104,32 +115,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   loading: (_) => const Center(
                     child: Padding(
                       padding: EdgeInsets.all(8.0),
-                      child: CircularProgressIndicator(
-                        color: Colors
-                            .teal, // မင်း App နဲ့ လိုက်ဖက်အောင် Teal အရောင်လေး ပေးထားပါတယ်
-                      ),
+                      child: CircularProgressIndicator(color: Colors.teal),
                     ),
                   ),
                   orElse: () => ElevatedButton(
                     onPressed: () async {
                       if (_formKey.currentState!.validate()) {
-                        final username = _usernameController.text.trim();
+                        final email = _usernameController.text.trim();
                         final password = _passwordController.text.trim();
 
                         try {
                           await ref
                               .read(authProvider.notifier)
-                              .login(username, password);
+                              .login(email, password);
 
                           if (context.mounted) {
                             Navigator.pushReplacementNamed(context, '/home');
                           }
                         } catch (e) {
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Login Failed: $e')),
-                            );
-                          }
+                          e.toString();
                         }
                       }
                     },
@@ -157,6 +161,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ),
                     ),
                   ),
+                ),
+                const SizedBox(height: 16),
+                TextButton(
+                  onPressed: () {
+                    Navigator.pushReplacementNamed(context, '/register');
+                  },
+                  child: const Text('Do you want to register? Register'),
                 ),
               ],
             ),
