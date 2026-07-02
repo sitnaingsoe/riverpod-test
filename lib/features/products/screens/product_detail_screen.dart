@@ -35,14 +35,14 @@ class ProductDetailScreen extends ConsumerWidget {
       body: Stack(
         children: [
           SingleChildScrollView(
-            padding: const EdgeInsets.only(bottom: 110),
+            padding: const EdgeInsets.only(bottom: 250),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // ၁။ Product Image Box
                 Container(
                   width: double.infinity,
-                  height: 200,
+                  height: 195,
                   color: Colors.grey[100],
                   child: CachedNetworkImage(
                     imageUrl: product.thumbnail.isNotEmpty
@@ -74,7 +74,7 @@ class ProductDetailScreen extends ConsumerWidget {
                 ),
 
                 Padding(
-                  padding: const EdgeInsets.all(20.0),
+                  padding: const EdgeInsets.all(15.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -99,7 +99,7 @@ class ProductDetailScreen extends ConsumerWidget {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 5),
 
                       Text(
                         product.title,
@@ -109,7 +109,7 @@ class ProductDetailScreen extends ConsumerWidget {
                           color: Colors.black87,
                         ),
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 5),
 
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -155,7 +155,7 @@ class ProductDetailScreen extends ConsumerWidget {
                       ),
 
                       const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 30),
+                        padding: EdgeInsets.symmetric(vertical: 15),
                         child: Divider(color: Colors.black12, height: 1),
                       ),
 
@@ -167,7 +167,7 @@ class ProductDetailScreen extends ConsumerWidget {
                           color: Colors.black87,
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 5),
                       Text(
                         product.description,
                         style: TextStyle(
@@ -177,7 +177,7 @@ class ProductDetailScreen extends ConsumerWidget {
                         ),
                       ),
 
-                      const SizedBox(height: 30),
+                      const SizedBox(height: 15),
                       const Text(
                         'Recommended for You',
                         style: TextStyle(
@@ -186,7 +186,7 @@ class ProductDetailScreen extends ConsumerWidget {
                           color: Colors.black87,
                         ),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 5),
                       recommendationsAsync.when(
                         data: (recommendedProducts) =>
                             recommendedProducts.isEmpty
@@ -316,7 +316,7 @@ class ProductDetailScreen extends ConsumerWidget {
             left: 0,
             right: 0,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               decoration: BoxDecoration(
                 color: Colors.white,
                 boxShadow: [

@@ -46,9 +46,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
     if (!mounted || !context.mounted) return;
     if (kDebugMode) {
-      print(
-        '################################################################isauthed $isAuthenticated',
-      );
+      print('Authentication status: $isAuthenticated');
     }
     if (isAuthenticated) {
       Navigator.pushReplacementNamed(context, '/home');

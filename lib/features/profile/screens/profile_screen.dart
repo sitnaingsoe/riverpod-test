@@ -8,6 +8,7 @@ class ProfileScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final authAsync = ref.watch(authProvider);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -54,11 +55,14 @@ class ProfileScreen extends ConsumerWidget {
                         CircleAvatar(
                           radius: 30,
                           backgroundImage: user.image.isNotEmpty
-                              ? NetworkImage(user.image)
-                              : const AssetImage(
-                                      'assets/images/default-image.jpg',
-                                    )
-                                    as ImageProvider,
+                              ? (user.image.startsWith('http')
+                                    ? NetworkImage(
+                                        user.image,
+                                      ) // 🌐 Internet URL ဖြစ်လျှင်
+                                    : AssetImage(user.image)
+                                          as ImageProvider) // 📁 Local Asset Path ဖြစ်လျှင်
+                              : const AssetImage('assets/images/profile.png')
+                                    as ImageProvider, // 💡 လုံးဝ အလွတ်ဖြစ်နေလျှင် ပြမည့်ပုံ
                         ),
                         const SizedBox(width: 20),
                         Text(
@@ -283,7 +287,6 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  // Helper Widget ပုံစံထုတ်ရန် (လက်ရှိ သင့်ကုဒ်ထဲကအတိုင်း)
   Widget buildGridItem(
     IconData icon,
     String title,

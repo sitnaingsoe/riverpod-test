@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart'; // 💡 compute သုံးရန် ထည့်သွင်းပါ
+import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 import 'package:http/http.dart' as http;
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
@@ -13,9 +13,9 @@ class ProductService {
     : _dio = Dio(
         BaseOptions(
           baseUrl: 'https://dummyjson.com',
-          connectTimeout: const Duration(seconds: 10),
-          receiveTimeout: const Duration(seconds: 10),
-          sendTimeout: const Duration(seconds: 10),
+          connectTimeout: const Duration(seconds: 5),
+          receiveTimeout: const Duration(seconds: 5),
+          sendTimeout: const Duration(seconds: 5),
           headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json',

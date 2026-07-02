@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import 'package:riverpod_test/features/auth/providers/auth_provider.dart';
@@ -18,11 +19,15 @@ class FavoritesNotifier extends AsyncNotifier<List<ProductModel>> {
       data: (user) {
         if (user != null) {
           _userId = user.id.toString();
-          print("🎯 Current Login User ID is: $_userId");
+          if (kDebugMode) {
+            print("🎯 Current Login User ID is: $_userId");
+          }
 
           final List<dynamic>? dynamicList = _favoriteBox.get(_userId);
 
-          print("📦 Retrieved Dynamic List: $dynamicList");
+          if (kDebugMode) {
+            print("📦 Retrieved Dynamic List: $dynamicList");
+          }
 
           if (dynamicList != null) {
             return dynamicList.map((item) {
@@ -30,7 +35,9 @@ class FavoritesNotifier extends AsyncNotifier<List<ProductModel>> {
             }).toList();
           }
         } else {
-          print("👤 User is NULL inside FavoritesNotifier!");
+          if (kDebugMode) {
+            print("👤 User is NULL inside FavoritesNotifier!");
+          }
           _userId = null;
         }
         return [];

@@ -10,21 +10,32 @@ class RegisterScreeen extends ConsumerStatefulWidget {
 
 class _RegisterScreenState extends ConsumerState<RegisterScreeen> {
   final _formKey = GlobalKey<FormState>();
+
   final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
+  final _passwordController = TextEditingController(text: 'sit123');
+  final _usernameController = TextEditingController(text: 'sitnaing');
+  final _firstNameController = TextEditingController(text: 'sitnaing');
+  final _lastNameController = TextEditingController(text: 'soe');
+  final _genderController = TextEditingController(text: 'male');
+
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _usernameController.dispose();
+    _firstNameController.dispose();
+    _lastNameController.dispose();
+    _genderController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
+
     ref.listen<AsyncValue>(authProvider, (previous, next) {
       next.whenOrNull(
-        error: (error, StackTrace) {
+        error: (error, stackTrace) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(error.toString()),
@@ -34,23 +45,27 @@ class _RegisterScreenState extends ConsumerState<RegisterScreeen> {
         },
         data: (user) {
           if (user != null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('successful created Account'),
-                backgroundColor: Colors.green,
-              ),
-            );
-            Navigator.pushReplacementNamed(context, '/home');
+            if (user.accessToken == 'PENDING_VERIFICATION') {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text(
+                    '📧 Verification link sent! Please check your email.',
+                  ),
+                  backgroundColor: Colors.blue,
+                ),
+              );
+              Navigator.pushReplacementNamed(context, '/verify-email');
+            }
           }
         },
       );
     });
 
     return Scaffold(
-      appBar: AppBar(title: const Text(' Register Account'), centerTitle: true),
+      appBar: AppBar(title: const Text('Register Account'), centerTitle: true),
       body: Center(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.9),
+          padding: const EdgeInsets.all(24.0),
           child: Form(
             key: _formKey,
             child: Column(
@@ -62,13 +77,68 @@ class _RegisterScreenState extends ConsumerState<RegisterScreeen> {
                   size: 80,
                   color: Colors.blue,
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 const Text(
-                  'Create Your Acount',
+                  'Create Your Account',
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 32),
+
+                TextFormField(
+                  controller: _usernameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Username',
+                    prefixIcon: Icon(Icons.account_circle_outlined),
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) => value == null || value.trim().isEmpty
+                      ? 'Username must be filled'
+                      : null,
+                ),
+                const SizedBox(height: 16),
+
+                TextFormField(
+                  controller: _firstNameController,
+                  decoration: const InputDecoration(
+                    labelText: 'First Name',
+                    prefixIcon: Icon(Icons.badge_outlined),
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) => value == null || value.trim().isEmpty
+                      ? 'First Name must be filled'
+                      : null,
+                ),
+                const SizedBox(height: 16),
+
+                // 📝 ၃။ Last Name Field
+                TextFormField(
+                  controller: _lastNameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Last Name',
+                    prefixIcon: Icon(Icons.badge_outlined),
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) => value == null || value.trim().isEmpty
+                      ? 'Last Name must be filled'
+                      : null,
+                ),
+                const SizedBox(height: 16),
+
+                // 📝 ၄။ Gender Field
+                TextFormField(
+                  controller: _genderController,
+                  decoration: const InputDecoration(
+                    labelText: 'Gender',
+                    prefixIcon: Icon(Icons.wc_outlined),
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) => value == null || value.trim().isEmpty
+                      ? 'Gender must be filled'
+                      : null,
+                ),
+                const SizedBox(height: 16),
+
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
@@ -79,34 +149,31 @@ class _RegisterScreenState extends ConsumerState<RegisterScreeen> {
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return 'Email must be fill';
+                      return 'Email must be filled';
                     }
-                    if (!value.contains('@')) {
-                      return 'invalid Email';
-                    }
+                    if (!value.contains('@')) return 'Invalid Email';
                     return null;
                   },
                 ),
                 const SizedBox(height: 16),
+
                 TextFormField(
                   controller: _passwordController,
                   obscureText: true,
                   decoration: const InputDecoration(
                     labelText: 'Password',
-                    prefixIcon: Icon(Icons.lock_clock_outlined),
+                    prefixIcon: Icon(Icons.lock_outline),
                     border: OutlineInputBorder(),
                   ),
                   validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Fill password';
-                    }
-                    if (value.length < 6) {
-                      return 'at least six character';
-                    }
+                    if (value == null || value.isEmpty) return 'Fill password';
+                    if (value.length < 6) return 'At least 6 characters';
                     return null;
                   },
                 ),
                 const SizedBox(height: 32),
+
+                // 🚀 Register Button
                 SizedBox(
                   height: 50,
                   child: ElevatedButton(
@@ -117,8 +184,13 @@ class _RegisterScreenState extends ConsumerState<RegisterScreeen> {
                               ref
                                   .read(authProvider.notifier)
                                   .register(
-                                    _emailController.text,
-                                    _passwordController.text,
+                                    email: _emailController.text.trim(),
+                                    password: _passwordController.text.trim(),
+                                    username: _usernameController.text.trim(),
+                                    firstName: _firstNameController.text.trim(),
+                                    lastName: _lastNameController.text.trim(),
+                                    gender: _genderController.text.trim(),
+                                    image: '',
                                   );
                             }
                           },
@@ -137,7 +209,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreeen> {
                 const SizedBox(height: 16),
                 TextButton(
                   onPressed: () {
-                    Navigator.pushReplacementNamed(context, '/login');
+                    Navigator.pushNamed(context, '/login');
                   },
                   child: const Text('Already have an account? Login'),
                 ),
