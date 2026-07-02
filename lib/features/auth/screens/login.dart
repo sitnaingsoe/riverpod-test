@@ -10,13 +10,13 @@ class LoginScreen extends ConsumerStatefulWidget {
 }
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
-  final _usernameController = TextEditingController();
-  final _passwordController = TextEditingController();
+  final _emailController = TextEditingController(text: 'sitnaingsoe@gmail.com');
+  final _passwordController = TextEditingController(text: 'sit123');
   final _formKey = GlobalKey<FormState>();
 
   @override
   void dispose() {
-    _usernameController.dispose();
+    _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -27,24 +27,35 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     ref.listen<AsyncValue>(authProvider, (previous, next) {
       next.whenOrNull(
-        // ignore: non_constant_identifier_names, avoid_types_as_parameter_names
-        error: (error, StackTrace) {
+        error: (error, stackTrace) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Email or Password incorrect'),
+              content: Text(error.toString()),
               backgroundColor: Colors.red,
             ),
           );
         },
         data: (user) {
           if (user != null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Login Successfull '),
-                backgroundColor: Colors.green,
-              ),
-            );
-            Navigator.pushReplacementNamed(context, '/home');
+            if (user.accessToken == 'PENDING_VERIFICATION') {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text(
+                    '📧 Verification link sent! Please check your email.',
+                  ),
+                  backgroundColor: Colors.black,
+                ),
+              );
+              Navigator.pushReplacementNamed(context, '/verify-email');
+            } else {
+              Navigator.pushReplacementNamed(context, '/home');
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Login Success! Welcome to the My App.'),
+                  backgroundColor: Colors.green,
+                ),
+              );
+            }
           }
         },
       );
@@ -58,7 +69,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
-
               children: [
                 const Icon(Icons.lock, size: 80, color: Colors.teal),
                 const SizedBox(height: 16),
@@ -78,17 +88,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
 
                 TextFormField(
-                  controller: _usernameController,
+                  controller: _emailController,
+                  keyboardType: TextInputType.emailAddress,
                   decoration: const InputDecoration(
-                    labelText: 'Username',
-                    prefixIcon: Icon(Icons.person),
+                    labelText: 'Email Address',
+                    prefixIcon: Icon(Icons.email_outlined),
                     border: OutlineInputBorder(),
-                    hintText: 'emilys',
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return 'Username';
+                      return 'Email must be filled';
                     }
+                    if (!value.contains('@')) return 'Invalid Email';
                     return null;
                   },
                 ),
@@ -121,17 +132,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   orElse: () => ElevatedButton(
                     onPressed: () async {
                       if (_formKey.currentState!.validate()) {
-                        final email = _usernameController.text.trim();
+                        final email = _emailController.text.trim();
                         final password = _passwordController.text.trim();
 
                         try {
                           await ref
                               .read(authProvider.notifier)
                               .login(email, password);
-
-                          if (context.mounted) {
-                            Navigator.pushReplacementNamed(context, '/home');
-                          }
                         } catch (e) {
                           e.toString();
                         }

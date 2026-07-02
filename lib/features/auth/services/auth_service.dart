@@ -2,9 +2,9 @@ import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:hive/hive.dart';
-import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 import 'package:riverpod_test/features/auth/models/auth_model.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class AuthService {
   final Dio _dio;
@@ -34,62 +34,34 @@ class AuthService {
       }
       return false;
     }
-    if (_auth.currentUser != null) {
-      if (kDebugMode) print('✅ [AuthService] Firebase User Session is Active.');
-      return true;
-    }
-    if (cachedUser.accessToken.isEmpty) {
-      if (kDebugMode) print('Do not Authorized');
+
+    final firebaseUser = _auth.currentUser;
+    if (firebaseUser == null) {
+      if (kDebugMode) {
+        print('ℹ️ [AuthService] No Firebase user found. Access Denied.');
+      }
+      await authBox.delete('current_user');
       return false;
     }
-
-    String accessToken = cachedUser.accessToken;
-    final refreshToken = cachedUser.refreshToken;
-
     try {
-      bool isTokenExpired = JwtDecoder.isExpired(accessToken);
-      if (isTokenExpired) {
-        if (kDebugMode) print('Access Token expired. Attempting refresh...');
-
-        if (refreshToken.isNotEmpty) {
-          final response = await _dio.post(
-            'https://dummyjson.com/auth/refresh',
-            data: {'refreshToken': refreshToken},
-          );
-
-          if (response.statusCode == 200) {
-            final newAccessToken = response.data['accessToken'];
-            final newRefreshToken =
-                response.data['refreshToken'] ?? refreshToken;
-
-            final updatedUser = AuthModel(
-              id: cachedUser.id,
-              username: cachedUser.username,
-              email: cachedUser.email,
-              firstName: cachedUser.firstName,
-              lastName: cachedUser.lastName,
-              gender: cachedUser.gender,
-              image: cachedUser.image,
-              accessToken: newAccessToken,
-              refreshToken: newRefreshToken,
-            );
-            await authBox.put('current_user', updatedUser);
-            if (kDebugMode) {
-              print('✅ [AuthService] API Token refreshed successfully!');
-            }
-            return true;
-          } else {
-            throw Exception('Failed to refresh token from API');
-          }
-        } else {
-          throw Exception('Refresh token field is empty');
-        }
+      if (kDebugMode) {
+        print('🔄 [AuthService] Checking and refreshing Firebase ID Token...');
       }
-      if (kDebugMode) print('✅ [AuthService] API Access Token is still valid.');
-      return true;
+      await firebaseUser.reload();
+      final String? token = await firebaseUser.getIdToken(false);
+      if (token != null) {
+        if (kDebugMode) {
+          print('🔑 [AuthService] Current Firebase ID Token: $token');
+        }
+        return true;
+      }
+      return false;
     } catch (e) {
-      if (kDebugMode) print('❌ [AuthService] Session Expired or Error: $e');
+      if (kDebugMode) {
+        print('❌ [AuthService] Error during token refresh: $e');
+      }
       await authBox.delete('current_user');
+      await _auth.signOut();
       return false;
     }
   }
@@ -113,19 +85,38 @@ class AuthService {
   Future<UserCredential> register({
     required String email,
     required String password,
+    required String username,
+    required String firstName,
+    required String lastName,
+    required String gender,
+    required String image,
   }) async {
-    return await _auth.createUserWithEmailAndPassword(
-      email: email,
-      password: password,
-    );
+    final UserCredential userCredential = await _auth
+        .createUserWithEmailAndPassword(email: email, password: password);
+
+    final String? uid = userCredential.user?.uid;
+
+    if (uid != null) {
+      await FirebaseFirestore.instance.collection('users').doc(uid).set({
+        'id': uid.hashCode,
+        'uid': uid,
+        'username': username,
+        'email': email,
+        'firstName': firstName,
+        'lastName': lastName,
+        'gender': gender,
+        'image': image,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    }
+
+    return userCredential;
   }
 
   Future<void> firebaselogout() async {
     await _auth.signOut();
     final authBox = Hive.box('authBox');
-    await authBox.delete(
-      'current_user',
-    ); // Firebase ထွက်ရင် Hive ထဲက ဒေတာပါ ရှင်းပေးခြင်း
+    await authBox.delete('current_user');
   }
 
   User? get currentUser => _auth.currentUser;
