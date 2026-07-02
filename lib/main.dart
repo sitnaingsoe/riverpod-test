@@ -15,9 +15,11 @@ import 'package:riverpod_test/features/auth/screens/login.dart';
 import 'package:riverpod_test/features/auth/screens/splash_screen.dart';
 import 'package:riverpod_test/features/navigation/screens/bottom_navigation_screen.dart';
 import 'package:riverpod_test/features/products/screens/product_detail_screen.dart';
+import 'package:riverpod_test/features/profile/screens/edit_profile_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
   try {
     await Firebase.initializeApp();
     if (kDebugMode) {
@@ -67,6 +69,7 @@ class MyApp extends ConsumerWidget {
         '/history-order': (context) => const OrdersHistoryScreen(),
         '/verify-email': (context) => const OtpVerificationScreen(),
         '/profile-setup': (context) => const ProfileSetupScreen(),
+        '/edit-profile': (context) => const EditProfileScreen(),
       },
     );
   }
