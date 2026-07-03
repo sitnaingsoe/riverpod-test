@@ -3,15 +3,13 @@ import 'dart:io';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:http/http.dart' as http;
+import 'package:hive/hive.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:hive/hive.dart';
-import 'package:intl/intl.dart';
 import 'package:riverpod_test/features/auth/providers/auth_provider.dart';
+import 'package:riverpod_test/utils/digital_ocean_storage_service.dart';
 
 class ProfileSetupScreen extends ConsumerStatefulWidget {
   const ProfileSetupScreen({super.key});
@@ -69,83 +67,31 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
 
     try {
       if (_localImagePath != null) {
-        final String region = "sgp1";
-        final String bucketName = "msquarefdc";
+        final downloadUrl = await DigitalOceanStorageService.uploadProfileImage(
+          _localImagePath!,
+        );
 
-        final int timestamp = DateTime.now().millisecondsSinceEpoch;
-        final String fileKey =
-            "foodie-pos/msquarefdc-batch3/sit-naing-soe/$timestamp\_profile.jpg";
-
-        final String accessKey = dotenv.env['DO_SPACE_ACCESS_KEY'] ?? '';
-
-        final String secretKey = dotenv.env['DO_SPACE_SECRET_KEY'] ?? '';
-
-        final file = File(_localImagePath!);
-        final bytes = await file.readAsBytes();
-
-        final now = DateTime.now().toUtc();
-        final amzDate = DateFormat("yyyyMMdd'T'HHmmss'Z'").format(now);
-        final dateStamp = DateFormat("yyyyMMdd").format(now);
-
-        final endpoint =
-            'https://$bucketName.$region.digitaloceanspaces.com/$fileKey';
-        final uri = Uri.parse(endpoint);
-
-        final headers = {
-          'Host': '$bucketName.$region.digitaloceanspaces.com',
-          'Content-Type': 'image/jpeg',
-          'X-Amz-Content-Sha256': sha256.convert(bytes).toString(),
-          'X-Amz-Date': amzDate,
-          'X-Amz-Acl': 'public-read',
-        };
-
-        final credentialScope = '$dateStamp/$region/s3/aws4_request';
-        final canonicalHeaders =
-            'host:${headers['Host']}\nx-amz-acl:public-read\nx-amz-content-sha256:${headers['X-Amz-Content-Sha256']}\nx-amz-date:$amzDate\n';
-        final signedHeaders = 'host;x-amz-acl;x-amz-content-sha256;x-amz-date';
-
-        final String canonicalUri = '/${uri.pathSegments.join("/")}';
-        final canonicalRequest =
-            'PUT\n$canonicalUri\n\n$canonicalHeaders\n$signedHeaders\n${headers['X-Amz-Content-Sha256']}';
-
-        final stringToSign =
-            'AWS4-HMAC-SHA256\n$amzDate\n$credentialScope\n${sha256.convert(utf8.encode(canonicalRequest))}';
-
-        final kDate = hmacSha256(utf8.encode('AWS4$secretKey'), dateStamp);
-        final kRegion = hmacSha256(kDate, region);
-        final kService = hmacSha256(kRegion, 's3');
-        final kSigning = hmacSha256(kService, 'aws4_request');
-        final signature = hexEncode(hmacSha256(kSigning, stringToSign));
-
-        headers['Authorization'] =
-            'AWS4-HMAC-SHA256 Credential=$accessKey/$credentialScope, SignedHeaders=$signedHeaders, Signature=$signature';
-
-        final response = await http.put(uri, headers: headers, body: bytes);
-
-        if (response.statusCode == 200) {
-          final String downloadUrl =
-              'https://msquarefdc.sgp1.cdn.digitaloceanspaces.com/$fileKey';
-          if (kDebugMode) {
-            print("✅ Image uploaded successfully: $downloadUrl");
-          }
-          // Firestore Update
-          await FirebaseFirestore.instance
-              .collection('users')
-              .doc(user.uid)
-              .update({'image': downloadUrl});
-
-          // Hive & Riverpod State Update
-          final authBox = Hive.box('authBox');
-          final cacheUserData = authBox.get('current_user');
-          if (cacheUserData != null) {
-            final updatedUserData = cacheUserData.copyWith(image: downloadUrl);
-            await authBox.put('current_user', updatedUserData);
-            ref.read(authProvider.notifier).updateUserState(updatedUserData);
-          }
-        } else {
+        if (downloadUrl.isEmpty) {
           throw Exception(
-            'DigitalOcean upload failed: ${response.statusCode}\n${response.body}',
+            '❌ Error: Failed to upload image to DigitalOcean Spaces',
           );
+        } else {
+          if (kDebugMode) {
+            print('✅ Image uploaded successfully: $downloadUrl');
+          }
+        }
+
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .update({'image': downloadUrl});
+
+        final authBox = Hive.box('authBox');
+        final cacheUserData = authBox.get('current_user') ?? '';
+        if (cacheUserData != null) {
+          final updatedUserData = cacheUserData.copyWith(image: downloadUrl);
+          await authBox.put('current_user', updatedUserData);
+          ref.read(authProvider.notifier).updateUserState(updatedUserData);
         }
       }
 
