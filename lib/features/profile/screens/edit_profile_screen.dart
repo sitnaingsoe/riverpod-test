@@ -114,6 +114,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       if (kDebugMode) {
         print('❌ Error saving profile: $e');
       }
+      // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error saving profile: $e'),
@@ -224,6 +225,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                               shape: BoxShape.circle,
                               boxShadow: [
                                 BoxShadow(
+                                  // ignore: deprecated_member_use
                                   color: Colors.black.withOpacity(0.08),
                                   blurRadius: 12,
                                   offset: const Offset(0, 4),
