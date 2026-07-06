@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_test/features/cart/providers/cart_provider.dart';
+import 'package:riverpod_test/features/cart/widgets/checkout_bottom_sheet.dart';
 
 class CartScreen extends ConsumerWidget {
   const CartScreen({super.key});
@@ -151,10 +152,41 @@ class CartScreen extends ConsumerWidget {
                       ),
                       // Checkout Button
                       ElevatedButton(
-                        onPressed: () {},
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.teal,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 32,
+                            vertical: 14,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        onPressed: cartItems.isEmpty
+                            ? null
+                            : () {
+                                // 💡 အသစ်ဆောက်ထားတဲ့ Reusable Widget ကို ဒီလိုလေးပဲ လှမ်းခေါ်လိုက်ရုံပါပဲ
+                                showModalBottomSheet(
+                                  context: context,
+                                  isScrollControlled: true,
+                                  backgroundColor: Colors.white,
+                                  shape: const RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.vertical(
+                                      top: Radius.circular(24),
+                                    ),
+                                  ),
+                                  builder: (context) => CheckoutBottomSheet(
+                                    totalAmount: totalPrice,
+                                  ),
+                                );
+                              },
                         child: const Text(
                           'Checkout',
-                          style: TextStyle(fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
                         ),
                       ),
                     ],
@@ -172,4 +204,3 @@ class CartScreen extends ConsumerWidget {
     );
   }
 }
-

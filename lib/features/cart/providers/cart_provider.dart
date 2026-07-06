@@ -138,6 +138,13 @@ class CartNotifier extends AsyncNotifier<List<CartItemModel>> {
 
     await _updateCartStorage(updatedList);
   }
+
+  Future<void> clearCart() async {
+    if (_userId == null) return;
+
+    await _updateCartStorage([]);
+    if (kDebugMode) print("🛒 Cart cleared successfully after checkout.");
+  }
 }
 
 final cartProvider = AsyncNotifierProvider<CartNotifier, List<CartItemModel>>(
