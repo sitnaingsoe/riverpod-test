@@ -1,3 +1,4 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
@@ -27,7 +28,8 @@ class AuthService {
 
   Future<bool> checkAndRefreshAuth() async {
     final authBox = Hive.box('authBox');
-    final AuthModel? cachedUser = authBox.get('current_user');
+    AuthModel? cachedUser = authBox.get('current_user');
+
     if (cachedUser == null) {
       if (kDebugMode) {
         print('ℹ️ [AuthService] No cached user found in Hive. Access Denied.');
@@ -35,24 +37,68 @@ class AuthService {
       return false;
     }
 
+    final connectivityResults = await Connectivity().checkConnectivity();
+    final isOffline = connectivityResults.contains(ConnectivityResult.none);
+
+    if (isOffline) {
+      if (kDebugMode) print('Offline: Firebase local session');
+
+      return _auth.currentUser != null;
+    }
+    // if (isOffline) {
+    //   if (kDebugMode) {
+    //     print(
+    //       '🌐 [AuthService] Offline mode detected. Authenticating via cached user.',
+    //     );
+    //   }
+    //   // ignore: unnecessary_nullable_for_final_variable_declarations
+    //   final String? localToken = cachedUser.accessToken;
+    //   if (localToken != null) {
+    //     bool isTokenExpired = JwtDecoder.isExpired(localToken);
+    //     if (isTokenExpired) {
+    //       if (kDebugMode) {
+    //         print(
+    //           '⏳ [AuthService] Offline: Cached Token has expired. Access Denied.',
+    //         );
+    //       }
+    //       await authBox.delete('current_user');
+    //       return false;
+    //     }
+
+    //     if (kDebugMode) {
+    //       print('✅ [AuthService] Offline: Cached Token is still valid.');
+    //     }
+    //     return true;
+    //   }
+    //   return false;
+    // }
+
     final firebaseUser = _auth.currentUser;
     if (firebaseUser == null) {
       if (kDebugMode) {
-        print('ℹ️ [AuthService] No Firebase user found. Access Denied.');
+        print(
+          'ℹ️ [AuthService] Online but no Firebase user found. Clearing cache.',
+        );
       }
       await authBox.delete('current_user');
       return false;
     }
+
     try {
       if (kDebugMode) {
-        print('🔄 [AuthService] Checking and refreshing Firebase ID Token...');
+        print(
+          '🔄 [AuthService] Online: Checking and refreshing Firebase ID Token...',
+        );
       }
       await firebaseUser.reload();
-      final String? token = await firebaseUser.getIdToken(false);
+      final String? token = await firebaseUser.getIdToken(true);
+
       if (token != null) {
         if (kDebugMode) {
-          print('🔑 [AuthService] Current Firebase ID Token: $token');
+          print('🔑 [AuthService] Token refreshed successfully.');
         }
+        final updatedUser = cachedUser.copyWith(accessToken: token);
+        await authBox.put('current_user', updatedUser);
         return true;
       }
       return false;
