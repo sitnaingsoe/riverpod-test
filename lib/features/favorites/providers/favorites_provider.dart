@@ -10,14 +10,15 @@ const String kFavoritesBoxName = 'user_favorites_box';
 class FavoritesNotifier extends AsyncNotifier<List<ProductModel>> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   late Box _favoriteBox;
+
   String? _userId;
 
   @override
   Future<List<ProductModel>> build() async {
     _favoriteBox = Hive.box(kFavoritesBoxName);
-    
+
     final authState = ref.watch(authProvider);
-    
+
     return authState.when(
       data: (user) async {
         if (user != null) {
@@ -25,26 +26,18 @@ class FavoritesNotifier extends AsyncNotifier<List<ProductModel>> {
           if (kDebugMode) {
             print("🎯 Current Login User ID is: $_userId");
           }
-          try {
-            final doc = await _firestore
-                .collection('favorites')
-                .doc(_userId)
-                .get();
+          List<ProductModel> localFavorites = [];
 
-            if (doc.exists && doc.data() != null) {
-              final data = doc.data()!;
-              final List<dynamic>? items = data['items'];
-              if (items != null) {
-                return items.map((item) {
-                  return ProductModel.fromJson(Map<String, dynamic>.from(item));
-                }).toList();
-              }
-            }
-          } catch (e) {
-            if (kDebugMode) {
-              print("❌ Error occurred while retrieving favorites: $e");
-            }
+          final List<dynamic> dyanmicList =
+              _favoriteBox.get(_userId) as List<dynamic>? ?? [];
+          if (dyanmicList.isNotEmpty) {
+            localFavorites = dyanmicList.map((item) {
+              return ProductModel.fromJson(Map<String, dynamic>.from(item));
+            }).toList();
           }
+
+          _syncWithFirestoreInBackground();
+          return localFavorites;
         } else {
           if (kDebugMode) {
             print("👤 User is NULL inside FavoritesNotifier!");
@@ -62,31 +55,90 @@ class FavoritesNotifier extends AsyncNotifier<List<ProductModel>> {
     if (_userId == null) return;
 
     final currentList = state.value ?? [];
-    final isExist = currentList.any((item) => item.id == product.id);
-    List<ProductModel> updatedList;
+
+    final index = currentList.indexWhere((item) => item.id == product.id);
+
+    final isExist = index != -1;
+    List<ProductModel> updatedList = List.from(currentList);
 
     if (isExist) {
-      updatedList = currentList.where((item) => item.id != product.id).toList();
+      updatedList.removeAt(index);
     } else {
-      updatedList = [...currentList, product];
+      updatedList.add(product);
     }
+    final previousJsonList = currentList.map((item) => item.toJson()).toList();
+    final updatedJsonList = updatedList.map((item) => item.toJson()).toList();
+
     final previousState = state;
     state = AsyncData(updatedList);
     try {
-      final jsonList = updatedList.map((item) => item.toJson()).toList();
-      await _firestore.collection('favorites').doc(_userId).set({
-        'items': jsonList,
-        'updatedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
+      await Future.wait([
+        _favoriteBox.put(_userId, updatedJsonList),
+        _firestore.collection('favorites').doc(_userId).set({
+          'items': updatedJsonList,
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true)),
+      ]);
     } catch (e) {
-      if (kDebugMode) print("❌ Error updating Firestore database: $e");
+      if (kDebugMode) print("❌ Error updating storage databases: $e");
       state = previousState;
+      await _favoriteBox.put(_userId, previousJsonList);
     }
+    // final isExist = currentList.any((item) => item.id == product.id);
+    // List<ProductModel> updatedList;
+
+    // if (isExist) {
+    //   updatedList = currentList.where((item) => item.id != product.id).toList();
+    // } else {
+    //   updatedList = [...currentList, product];
+    // }
+    // final previousState = state;
+    // state = AsyncData(updatedList);
+    // try {
+    //   final jsonList = updatedList.map((item) => item.toJson()).toList();
+    //   await _favoriteBox.put(_userId, jsonList);
+    //   await _firestore.collection('favorites').doc(_userId).set({
+    //     'items': jsonList,
+    //     'updatedAt': FieldValue.serverTimestamp(),
+    //   }, SetOptions(merge: true));
+    // } catch (e) {
+    //   if (kDebugMode) print("❌ Error updating Firestore database: $e");
+    //   state = previousState;
+    //   final rollbackJsonList = (previousState.value ?? [])
+    //       .map((item) => item.toJson())
+    //       .toList();
+    //   await _favoriteBox.put(_userId, rollbackJsonList);
+    // }
   }
 
   bool isFavorite(int productId) {
     final currentList = state.value ?? [];
     return currentList.any((item) => item.id == productId);
+  }
+
+  Future<void> _syncWithFirestoreInBackground() async {
+    if (_userId == null) return;
+    try {
+      final doc = await _firestore.collection('favorites').doc(_userId).get();
+
+      if (doc.exists && doc.data() != null) {
+        final data = doc.data()!;
+        final List<dynamic>? items = data['items'] ?? [];
+        if (items != null) {
+          final cloudFavorites = items.map((item) {
+            return ProductModel.fromJson(Map<String, dynamic>.from(item));
+          }).toList();
+
+          final jsonList = cloudFavorites.map((item) => item.toJson()).toList();
+          await _favoriteBox.put(_userId, jsonList);
+          state = AsyncData(cloudFavorites);
+        }
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print("☁️ Firestore Sync Error  $e");
+      }
+    }
   }
 }
 

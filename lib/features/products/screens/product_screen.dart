@@ -1,6 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_test/features/auth/providers/auth_provider.dart';
+import 'package:riverpod_test/features/favorites/providers/favorites_provider.dart';
 import 'package:riverpod_test/features/products/models/product_model.dart';
 import 'package:riverpod_test/features/products/providers/product_provider.dart';
 import 'package:riverpod_test/features/products/widgets/error_screen.dart';
@@ -142,10 +144,23 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
                             borderRadius: BorderRadius.circular(8),
                           ),
                         ),
-                        onPressed: () {
+                        onPressed: () async {
                           Navigator.of(context).pop();
-                          ref.read(authProvider.notifier).logout();
-                          Navigator.pushReplacementNamed(context, '/login');
+                          try {
+                            await ref.read(authProvider.notifier).logout();
+                            ref.invalidate(favoritesProvider);
+                            if (context.mounted) {
+                              Navigator.pushNamedAndRemoveUntil(
+                                context,
+                                '/login',
+                                (route) => false,
+                              );
+                            }
+                          } catch (e) {
+                            if (kDebugMode) {
+                              print("❌ Logout လုပ်ရတာ အဆင်မပြေပါ: $e");
+                            }
+                          }
                         },
                         child: const Text('Logout'),
                       ),

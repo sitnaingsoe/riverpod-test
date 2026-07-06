@@ -1,16 +1,20 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import 'package:riverpod_test/features/auth/providers/auth_provider.dart'; // သင့် AuthProvider လမ်းကြောင်း
 import 'package:riverpod_test/features/cart/models/cart_item_model.dart';
 import 'package:riverpod_test/features/products/models/product_model.dart';
 
-class CartNotifier extends Notifier<List<CartItemModel>> {
+final String _kCartBoxName = 'user_cart_box';
+
+class CartNotifier extends AsyncNotifier<List<CartItemModel>> {
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   late Box _cartBox;
   String? _userId;
-  final String _kCartBoxName = 'user_cart_box';
 
   @override
-  List<CartItemModel> build() {
+  Future<List<CartItemModel>> build() async {
     _cartBox = Hive.box(_kCartBoxName);
 
     final authState = ref.watch(authProvider);
@@ -19,13 +23,17 @@ class CartNotifier extends Notifier<List<CartItemModel>> {
       data: (user) {
         if (user != null) {
           _userId = user.id.toString();
+          if (kDebugMode) print("🎯 Shopping Cart - User ID: $_userId");
+          List<CartItemModel> localCart = [];
           final dynamicList = _cartBox.get(_userId) as List<dynamic>?;
 
           if (dynamicList != null) {
-            return dynamicList.map((item) {
+            localCart = dynamicList.map((item) {
               return CartItemModel.fromJson(Map<String, dynamic>.from(item));
             }).toList();
           }
+          _syncCartWithFirestoreInBackground();
+          return localCart;
         } else {
           _userId = null;
         }
@@ -36,74 +44,130 @@ class CartNotifier extends Notifier<List<CartItemModel>> {
     );
   }
 
-  void _saveAndEmitState(List<CartItemModel> updatedList) async {
-    state = updatedList;
+  Future<void> _syncCartWithFirestoreInBackground() async {
+    if (_userId == null) return;
+    try {
+      final doc = await _firestore.collection('carts').doc(_userId).get();
 
-    if (_userId != null) {
-      final jsonList = updatedList.map((item) => item.toJson()).toList();
-      await _cartBox.put(_userId, jsonList);
+      if (doc.exists && doc.data() != null) {
+        final data = doc.data()!;
+        final List<dynamic> items = data['items'] ?? [];
+
+        final cloudCart = items.map((item) {
+          return CartItemModel.fromJson(Map<String, dynamic>.from(item));
+        }).toList();
+
+        final jsonList = cloudCart.map((item) => item.toJson()).toList();
+        await _cartBox.put(_userId, jsonList);
+        state = AsyncData(cloudCart);
+      }
+    } catch (e) {
+      if (kDebugMode) print("☁️ Cart Firestore Sync Error: $e");
     }
   }
 
-  void addToCart(ProductModel product) {
-    final index = state.indexWhere((item) => item.product.id == product.id);
-    List<CartItemModel> updatedList;
-
-    if (index != -1) {
-      updatedList = [
-        for (int i = 0; i < state.length; i++)
-          if (i == index)
-            CartItemModel(
-              product: state[i].product,
-              quantity: state[i].quantity + 1,
-            )
-          else
-            state[i],
-      ];
-    } else {
-      updatedList = [...state, CartItemModel(product: product)];
-    }
-
-    _saveAndEmitState(updatedList);
-  }
-
-  void updateQuantity(int productId, bool isIncrement) {
-    final updatedList = [
-      for (final item in state)
-        if (item.product.id == productId)
-          CartItemModel(
-            product: item.product,
-            quantity: isIncrement
-                ? item.quantity + 1
-                : (item.quantity > 1 ? item.quantity - 1 : 1),
-          )
-        else
-          item,
-    ];
-
-    _saveAndEmitState(updatedList);
-  }
-
-  void removeFromCart(int productId) {
-    final updatedList = state
-        .where((item) => item.product.id != productId)
-        .toList();
-    _saveAndEmitState(updatedList);
-  }
-
-  void clearCart() {
-    final updatedList = <CartItemModel>[];
-    _saveAndEmitState(updatedList);
-  }
-
-  double get totalPrice {
-    return state.fold(
-      0.0,
-      (sum, item) => sum + (item.product.price * item.quantity),
+  void addToCart(ProductModel product) async {
+    if (_userId == null) return;
+    final currentLsit = state.value ?? [];
+    List<CartItemModel> updatedList = List.from(currentLsit);
+    final index = updatedList.indexWhere(
+      (item) => item.product.id == product.id,
     );
+    if (index != -1) {
+      final currentItem = updatedList[index];
+      updatedList[index] = CartItemModel(
+        product: currentItem.product,
+        quantity: currentItem.quantity + 1,
+      );
+    } else {
+      updatedList.add(CartItemModel(product: product, quantity: 1));
+    }
+    await _updateCartStorage(updatedList);
+  }
+
+  Future<void> _updateCartStorage(List<CartItemModel> updatedList) async {
+    final previousState = state;
+    state = AsyncData(updatedList);
+    try {
+      final jsonList = updatedList.map((item) => item.toJson()).toList();
+      await Future.wait([
+        _cartBox.put(_userId, jsonList),
+        _firestore.collection('carts').doc(_userId).set({
+          'items': jsonList,
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true)),
+      ]);
+    } catch (e) {
+      if (kDebugMode) print("❌ Error updating Cart databases: $e");
+      state = previousState;
+      final rollbackJsonList = (previousState.value ?? [])
+          .map((item) => item.toJson())
+          .toList();
+      await _cartBox.put(_userId, rollbackJsonList);
+    }
+  }
+
+  void removeFromCart(ProductModel product) async {
+    if (_userId == null) return;
+    final currentList = state.value ?? [];
+    List<CartItemModel> updatedList = List.from(currentList);
+    final index = currentList.indexWhere(
+      (item) => item.product.id == product.id,
+    );
+    if (index != -1) {
+      final currentItem = updatedList[index];
+      if (currentItem.quantity > 1) {
+        updatedList[index] = CartItemModel(
+          product: currentItem.product,
+          quantity: currentItem.quantity - 1,
+        );
+      } else {
+        updatedList.removeAt(index);
+      }
+      await _updateCartStorage(updatedList);
+    }
+  }
+
+  void deleteItemFromCart(ProductModel product) async {
+    if (_userId == null) return;
+
+    final currentList = state.value ?? [];
+    final updatedList = currentList
+        .where((item) => item.product.id != product.id)
+        .toList();
+
+    await _updateCartStorage(updatedList);
   }
 }
 
-final cartProvider = NotifierProvider<CartNotifier, List<CartItemModel>>(() {
-  return CartNotifier();
+final cartProvider = AsyncNotifierProvider<CartNotifier, List<CartItemModel>>(
+  () {
+    return CartNotifier();
+  },
+);
+
+final totalCartCountProvider = Provider<int>((ref) {
+  final cartState = ref.watch(cartProvider);
+
+  return cartState.maybeWhen(
+    data: (cartList) {
+      // ignore: avoid_types_as_parameter_names
+      return cartList.fold<int>(0, (sum, item) => sum + item.quantity);
+    },
+    orElse: () => 0,
+  );
+});
+final cartTotalPriceProvider = Provider<double>((ref) {
+  final cartState = ref.watch(cartProvider);
+
+  return cartState.maybeWhen(
+    data: (cartList) {
+      return cartList.fold<double>(
+        0.0,
+        // ignore: avoid_types_as_parameter_names
+        (sum, item) => sum + (item.product.price * item.quantity),
+      );
+    },
+    orElse: () => 0.0,
+  );
 });

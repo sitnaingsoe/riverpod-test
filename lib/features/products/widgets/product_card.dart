@@ -17,9 +17,9 @@ class ProductGridItem extends ConsumerWidget {
       orElse: () => false,
     );
 
-    final isInCart = ref
-        .watch(cartProvider)
-        .any((item) => item.product.id == product.id);
+    final isInCart = (ref.watch(cartProvider).value ?? []).any(
+      (item) => item.product.id == product.id,
+    );
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -205,7 +205,7 @@ class ProductGridItem extends ConsumerWidget {
                           if (isInCart) {
                             ref
                                 .read(cartProvider.notifier)
-                                .removeFromCart(product.id);
+                                .removeFromCart(product);
 
                             ScaffoldMessenger.of(context).clearSnackBars();
                             ScaffoldMessenger.of(context).showSnackBar(

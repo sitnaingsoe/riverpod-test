@@ -17,9 +17,9 @@ class ProductDetailScreen extends ConsumerWidget {
     final isFavorite = favoriteList.any((item) => item.id == product.id);
     final cartNotifier = ref.read(cartProvider.notifier);
     final recommendationsAsync = ref.watch(recommendationProvider(product.id));
-    final isInCart = ref
-        .watch(cartProvider)
-        .any((item) => item.product.id == product.id);
+    final isInCart = (ref.watch(cartProvider).value ?? []).any(
+      (item) => item.product.id == product.id,
+    );
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -199,10 +199,11 @@ class ProductDetailScreen extends ConsumerWidget {
                                   itemBuilder: (context, index) {
                                     final item = recommendedProducts[index];
                                     final cartItems = ref.watch(cartProvider);
-                                    final bool isInCart = cartItems.any(
-                                      (cartItem) =>
-                                          cartItem.product.id == item.id,
-                                    );
+                                    final bool isInCart =
+                                        (cartItems.value ?? []).any(
+                                          (item) =>
+                                              item.product.id == product.id,
+                                        );
                                     return Container(
                                       width: 140,
                                       margin: const EdgeInsets.only(right: 12),
@@ -384,7 +385,7 @@ class ProductDetailScreen extends ConsumerWidget {
                         ),
                         onPressed: () {
                           if (isInCart) {
-                            cartNotifier.removeFromCart(product.id);
+                            cartNotifier.removeFromCart(product);
 
                             ScaffoldMessenger.of(context).clearSnackBars();
                             ScaffoldMessenger.of(context).showSnackBar(
