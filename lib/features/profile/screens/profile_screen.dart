@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_test/features/auth/providers/auth_provider.dart';
 import 'package:riverpod_test/features/favorites/providers/favorites_provider.dart';
+import 'package:riverpod_test/features/profile/widgets/profile_grid_item.dart';
+import 'package:riverpod_test/features/profile/widgets/profile_info_row.dart';
+import 'package:riverpod_test/features/profile/widgets/reset_password_dialog.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -142,29 +145,30 @@ class ProfileScreen extends ConsumerWidget {
                     mainAxisSpacing: 16,
                     childAspectRatio: 1.4,
                     children: [
-                      buildGridItem(
-                        Icons.favorite_rounded,
-                        "Favorite",
-                        Colors.redAccent.shade200,
-                        () => Navigator.pushNamed(context, '/favorite'),
+                      ProfileGridItem(
+                        icon: Icons.favorite_rounded,
+                        title: "Favorite",
+                        color: Colors.redAccent.shade200,
+                        onTap: () => Navigator.pushNamed(context, '/favorite'),
                       ),
-                      buildGridItem(
-                        Icons.shopping_bag_rounded,
-                        "Orders",
-                        Colors.blueAccent.shade200,
-                        () => Navigator.pushNamed(context, "/history-order"),
+                      ProfileGridItem(
+                        icon: Icons.shopping_bag_rounded,
+                        title: "Orders",
+                        color: Colors.blueAccent.shade200,
+                        onTap: () =>
+                            Navigator.pushNamed(context, "/history-order"),
                       ),
-                      buildGridItem(
-                        Icons.account_balance_wallet_rounded,
-                        "Payment",
-                        Colors.purpleAccent.shade400,
-                        () => Navigator.pushNamed(context, "/payment"),
+                      ProfileGridItem(
+                        icon: Icons.account_balance_wallet_rounded,
+                        title: "Payment",
+                        color: Colors.purpleAccent.shade400,
+                        onTap: () => Navigator.pushNamed(context, "/payment"),
                       ),
-                      buildGridItem(
-                        Icons.location_on_rounded,
-                        "Address",
-                        Colors.orangeAccent.shade200,
-                        () => Navigator.pushNamed(context, "/address"),
+                      ProfileGridItem(
+                        icon: Icons.location_on_rounded,
+                        title: "Address",
+                        color: Colors.orangeAccent.shade200,
+                        onTap: () => Navigator.pushNamed(context, "/address"),
                       ),
                     ],
                   ),
@@ -201,11 +205,16 @@ class ProfileScreen extends ConsumerWidget {
                         const SizedBox(height: 12),
                         Divider(color: Colors.grey.shade100, thickness: 1.2),
                         const SizedBox(height: 8),
-                        buildInfoRow(Icons.email_outlined, "Email", user.email),
-                        buildInfoRow(
-                          Icons.person_outline_rounded,
-                          "Gender",
-                          user.gender,
+                        // 💡 Reusable UI Widget များဖြင့် အစားထိုးခြင်း
+                        ProfileInfoRow(
+                          icon: Icons.email_outlined,
+                          label: "Email",
+                          value: user.email,
+                        ),
+                        ProfileInfoRow(
+                          icon: Icons.person_outline_rounded,
+                          label: "Gender",
+                          value: user.gender,
                         ),
                       ],
                     ),
@@ -233,6 +242,44 @@ class ProfileScreen extends ConsumerWidget {
                     ),
                     child: Column(
                       children: [
+                        ListTile(
+                          leading: CircleAvatar(
+                            backgroundColor: Colors.grey.shade100,
+                            child: const Icon(
+                              Icons.lock_reset_rounded,
+                              color: Colors.blueGrey,
+
+                              size: 22,
+                            ),
+                          ),
+                          title: const Text(
+                            "Reset Password",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                            ),
+                          ),
+                          trailing: Icon(
+                            Icons.arrow_forward_ios_rounded,
+                            size: 14,
+                            color: Colors.grey.shade400,
+                          ),
+                          onTap: () {
+                            showDialog(
+                              context: context,
+                              builder: (context) => const ResetPasswordDialog(),
+                            );
+                          },
+                        ),
+
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                          child: Divider(
+                            color: Colors.grey.shade50,
+                            thickness: 1,
+                          ),
+                        ),
+
                         ListTile(
                           leading: CircleAvatar(
                             backgroundColor: Colors.grey.shade50,
@@ -291,7 +338,6 @@ class ProfileScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 32),
 
-                  // --- 🚪 Logout Button ---
                   SizedBox(
                     height: 54,
                     width: double.infinity,
@@ -390,96 +436,11 @@ class ProfileScreen extends ConsumerWidget {
                       },
                     ),
                   ),
-                  const SizedBox(height: 24),
                 ],
               ),
             ),
           );
         },
-      ),
-    );
-  }
-
-  Widget buildGridItem(
-    IconData icon,
-    String title,
-    Color color,
-    VoidCallback onTap,
-  ) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            // ignore: deprecated_member_use
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(16),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  // ignore: deprecated_member_use
-                  color: color.withOpacity(0.12),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, color: color, size: 26),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                title,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
-                  color: Colors.black87,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget buildInfoRow(IconData icon, String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10.0),
-      child: Row(
-        children: [
-          Icon(icon, size: 20, color: Colors.blueGrey.shade400),
-          const SizedBox(width: 14),
-          Text(
-            "$label:",
-            style: TextStyle(
-              color: Colors.grey.shade500,
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              value,
-              style: const TextStyle(
-                color: Colors.black87,
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-              ),
-              textAlign: TextAlign.end,
-            ),
-          ),
-        ],
       ),
     );
   }

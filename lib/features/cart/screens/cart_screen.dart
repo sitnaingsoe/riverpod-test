@@ -166,7 +166,6 @@ class CartScreen extends ConsumerWidget {
                         onPressed: cartItems.isEmpty
                             ? null
                             : () {
-                                // 💡 အသစ်ဆောက်ထားတဲ့ Reusable Widget ကို ဒီလိုလေးပဲ လှမ်းခေါ်လိုက်ရုံပါပဲ
                                 showModalBottomSheet(
                                   context: context,
                                   isScrollControlled: true,
@@ -199,7 +198,7 @@ class CartScreen extends ConsumerWidget {
         loading: () =>
             const Center(child: CircularProgressIndicator(color: Colors.teal)),
         error: (error, stackTrace) =>
-            Center(child: Text("❌ ချိတ်ဆက်မှု အဆင်မပြေပါ- $error")),
+            Center(child: Text("❌ Connection Problem- $error")),
       ),
     );
   }

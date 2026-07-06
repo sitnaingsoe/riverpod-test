@@ -173,6 +173,14 @@ class AuthNotifier extends AsyncNotifier<AuthModel?> {
   void updateUserState(AuthModel updatedUser) {
     state = AsyncValue.data(updatedUser);
   }
+
+  Future<void> sendPasswordReset(String email) async {
+    try {
+      await FirebaseAuth.instance.sendPasswordResetEmail(email: email.trim());
+    } catch (e) {
+      throw 'An unexpected error occurred. Please try again.';
+    }
+  }
 }
 
 final authProvider = AsyncNotifierProvider<AuthNotifier, AuthModel?>(
