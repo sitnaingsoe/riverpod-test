@@ -71,7 +71,6 @@ class AuthModel extends HiveObject {
     };
   }
 
-  // 💡 AuthModel ရဲ့ အောက်ခြေတွင် ဤကုဒ်ကို ထည့်သွင်းပေးပါ
   AuthModel copyWith({
     int? id,
     String? username,

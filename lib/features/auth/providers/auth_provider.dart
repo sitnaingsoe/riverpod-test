@@ -44,21 +44,40 @@ class AuthNotifier extends AsyncNotifier<AuthModel?> {
       final firebaseUser = userCredential.user;
 
       if (firebaseUser != null) {
-        await firebaseUser.sendEmailVerification();
-
-        state = AsyncValue.data(
-          AuthModel(
-            id: firebaseUser.uid.hashCode,
-            email: firebaseUser.email ?? email,
-            username: username.trim(),
-            firstName: firstName.trim(),
-            lastName: lastName.trim(),
-            gender: gender.trim(),
-            image: image,
-            accessToken: 'PENDING_VERIFICATION',
-            refreshToken: '',
-          ),
+        final String profileImageUrl = 'assets/images/profile.png';
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(firebaseUser.uid)
+            .set({
+              'id': firebaseUser.uid.hashCode,
+              'uid': firebaseUser.uid,
+              'username': username,
+              'email': firebaseUser.email,
+              'firstName': firstName,
+              'lastName': lastName,
+              'gender': gender,
+              'image': profileImageUrl,
+              'createdAt': FieldValue.serverTimestamp(),
+            });
+        final token = await firebaseUser.getIdToken();
+        if (kDebugMode) {
+          print('Token: $token');
+        }
+        final newUser = AuthModel(
+          id: firebaseUser.uid.hashCode,
+          email: firebaseUser.email ?? '',
+          username: username,
+          firstName: firstName,
+          lastName: lastName,
+          gender: gender,
+          image: profileImageUrl,
+          accessToken: token ?? '',
+          refreshToken: firebaseUser.refreshToken ?? '',
         );
+        final authBox = Hive.box('authBox');
+        await authBox.put('current_user', newUser);
+
+        state = AsyncValue.data(newUser);
 
         developer.log(
           '🎉 Register, Firestore Storage & Hive Update Successful!',
@@ -102,49 +121,28 @@ class AuthNotifier extends AsyncNotifier<AuthModel?> {
         }
 
         final token = await firebaseUser.getIdToken();
+        final DocumentSnapshot userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(firebaseUser.uid)
+            .get();
 
-        if (!firebaseUser.emailVerified) {
-          final pendingUser = AuthModel(
-            id: intId,
-            email: firebaseUser.email ?? email,
-            username: email.split('@')[0],
-            firstName: 'Jhon',
-            lastName: 'Smith',
-            gender: 'unknown',
-            image: '',
-            accessToken: 'PENDING_VERIFICATION',
-            refreshToken: '',
-          );
-          state = AsyncValue.data(pendingUser);
-          developer.log(
-            '⚠️ Login blocked: Email not verified yet.',
-            name: 'AUTH_NOTIFIER',
-          );
-          return;
-        } else {
-          final DocumentSnapshot userDoc = await FirebaseFirestore.instance
-              .collection('users')
-              .doc(firebaseUser.uid)
-              .get();
+        final data = userDoc.data() as Map<String, dynamic>;
+        final AuthModel newUser = AuthModel(
+          id: intId,
+          email: firebaseUser.email ?? email,
+          username: data['username'] ?? email.split('@')[0],
+          firstName: data['firstName'] ?? 'Jhon',
+          lastName: data['lastName'] ?? 'Smith',
+          gender: data['gender'] ?? 'unknown',
+          image: data['image'] ?? '',
+          accessToken: token ?? '',
+          refreshToken: firebaseUser.refreshToken ?? '',
+        );
 
-          final data = userDoc.data() as Map<String, dynamic>;
-          final AuthModel newUser = AuthModel(
-            id: intId,
-            email: firebaseUser.email ?? email,
-            username: data['username'] ?? email.split('@')[0],
-            firstName: data['firstName'] ?? 'Jhon',
-            lastName: data['lastName'] ?? 'Smith',
-            gender: data['gender'] ?? 'unknown',
-            image: data['image'] ?? '',
-            accessToken: token ?? '',
-            refreshToken: firebaseUser.refreshToken ?? '',
-          );
+        final authBox = Hive.box('authBox');
+        await authBox.put('current_user', newUser);
 
-          final authBox = Hive.box('authBox');
-          await authBox.put('current_user', newUser);
-
-          state = AsyncValue.data(newUser);
-        }
+        state = AsyncValue.data(newUser);
       }
     } catch (error, stackTrace) {
       state = AsyncValue.error(error, stackTrace);
@@ -170,51 +168,6 @@ class AuthNotifier extends AsyncNotifier<AuthModel?> {
 
   void clearAuthState() {
     state = const AsyncValue.data(null);
-  }
-
-  Future<bool> checkEmailVerified({
-    required String username,
-    required String firstName,
-    required String lastName,
-    required String gender,
-    required String image,
-  }) async {
-    await _firebaseAuth.currentUser?.reload();
-    final user = _firebaseAuth.currentUser;
-
-    if (user != null && user.emailVerified) {
-      final token = await user.getIdToken();
-      final String profileImageUrl = 'assets/images/profile.png';
-      await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
-        'id': user.uid.hashCode,
-        'uid': user.uid,
-        'username': username,
-        'email': user.email,
-        'firstName': firstName,
-        'lastName': lastName,
-        'gender': gender,
-        'image': profileImageUrl,
-        'createdAt': FieldValue.serverTimestamp(),
-      });
-
-      final newUser = AuthModel(
-        id: user.uid.hashCode,
-        email: user.email ?? '',
-        username: username,
-        firstName: firstName,
-        lastName: lastName,
-        gender: gender,
-        image: profileImageUrl,
-        accessToken: token ?? '',
-        refreshToken: user.refreshToken ?? '',
-      );
-      final authBox = Hive.box('authBox');
-      await authBox.put('current_user', newUser);
-
-      state = AsyncValue.data(newUser);
-      return true;
-    }
-    return false;
   }
 
   void updateUserState(AuthModel updatedUser) {

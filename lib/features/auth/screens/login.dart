@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_test/features/auth/providers/auth_provider.dart';
@@ -30,32 +31,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         error: (error, stackTrace) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(error.toString()),
+              content: Text('Login Failed: Email or Password is incorrect.'),
               backgroundColor: Colors.red,
             ),
           );
         },
         data: (user) {
           if (user != null) {
-            if (user.accessToken == 'PENDING_VERIFICATION') {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text(
-                    '📧 Verification link sent! Please check your email.',
-                  ),
-                  backgroundColor: Colors.black,
-                ),
-              );
-              Navigator.pushReplacementNamed(context, '/verify-email');
-            } else {
-              Navigator.pushReplacementNamed(context, '/home');
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Login Success! Welcome to the My App.'),
-                  backgroundColor: Colors.green,
-                ),
-              );
-            }
+            Navigator.pushReplacementNamed(context, '/home');
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Login Success! Welcome to the My App.'),
+                backgroundColor: Colors.green,
+              ),
+            );
           }
         },
       );
@@ -140,7 +129,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               .read(authProvider.notifier)
                               .login(email, password);
                         } catch (e) {
-                          e.toString();
+                          if (kDebugMode) {
+                            print('Login failed: $e');
+                          }
                         }
                       }
                     },

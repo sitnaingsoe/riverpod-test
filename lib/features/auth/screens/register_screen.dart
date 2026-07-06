@@ -10,14 +10,12 @@ class RegisterScreeen extends ConsumerStatefulWidget {
 
 class _RegisterScreenState extends ConsumerState<RegisterScreeen> {
   final _formKey = GlobalKey<FormState>();
-
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController(text: 'sit123');
   final _usernameController = TextEditingController(text: 'sitnaing');
   final _firstNameController = TextEditingController(text: 'sitnaing');
   final _lastNameController = TextEditingController(text: 'soe');
   final _genderController = TextEditingController(text: 'male');
-
   @override
   void dispose() {
     _emailController.dispose();
@@ -29,6 +27,42 @@ class _RegisterScreenState extends ConsumerState<RegisterScreeen> {
     super.dispose();
   }
 
+  InputDecoration _buildInputDecoration(String label, IconData icon) {
+    return InputDecoration(
+      labelText: label,
+      prefixIcon: Icon(icon, color: Colors.blueGrey.shade600, size: 22),
+      labelStyle: TextStyle(color: Colors.blueGrey.shade600),
+      floatingLabelStyle: const TextStyle(
+        color: Colors.blue,
+        fontWeight: FontWeight.bold,
+      ),
+      filled: true,
+      fillColor: Colors.grey.shade100,
+      contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey.shade300),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey.shade300),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Colors.blue, width: 2),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Colors.redAccent, width: 1),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Colors.redAccent, width: 2),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
@@ -38,173 +72,216 @@ class _RegisterScreenState extends ConsumerState<RegisterScreeen> {
         error: (error, stackTrace) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(error.toString()),
+              content: Text('Registration Failed ${error.toString()}'),
               backgroundColor: Colors.red,
             ),
           );
         },
         data: (user) {
           if (user != null) {
-            if (user.accessToken == 'PENDING_VERIFICATION') {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text(
-                    '📧 Verification link sent! Please check your email.',
-                  ),
-                  backgroundColor: Colors.blue,
-                ),
-              );
-              Navigator.pushReplacementNamed(context, '/verify-email');
-            }
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(' Successfull Account Created! '),
+                behavior: SnackBarBehavior.floating,
+                backgroundColor: Colors.green,
+              ),
+            );
+            Navigator.pushReplacementNamed(
+              context,
+              '/profile-setup',
+              arguments: user.email ?? '',
+            );
           }
         },
       );
     });
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Register Account'), centerTitle: true),
+      backgroundColor: Colors.white,
       body: Center(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
           child: Form(
             key: _formKey,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Icon(
-                  Icons.person_add_alt_1_rounded,
-                  size: 80,
-                  color: Colors.blue,
+                Container(
+                  padding: const EdgeInsets.all(16.0),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.shade100,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.person_add,
+                    size: 50,
+                    color: Colors.teal,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 const Text(
-                  'Create Your Account',
+                  'Create your account',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                    letterSpacing: 0.2,
+                  ),
                 ),
-                const SizedBox(height: 32),
-
+                const SizedBox(height: 36),
                 TextFormField(
                   controller: _usernameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Username',
-                    prefixIcon: Icon(Icons.account_circle_outlined),
-                    border: OutlineInputBorder(),
+                  decoration: _buildInputDecoration(
+                    'Username',
+                    Icons.account_circle_outlined,
                   ),
-                  validator: (value) => value == null || value.trim().isEmpty
-                      ? 'Username must be filled'
-                      : null,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black87,
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter your username';
+                    }
+                    return null;
+                  },
                 ),
+
                 const SizedBox(height: 16),
 
-                TextFormField(
-                  controller: _firstNameController,
-                  decoration: const InputDecoration(
-                    labelText: 'First Name',
-                    prefixIcon: Icon(Icons.badge_outlined),
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) => value == null || value.trim().isEmpty
-                      ? 'First Name must be filled'
-                      : null,
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: _firstNameController,
+                        decoration: _buildInputDecoration(
+                          'First Name',
+                          Icons.badge_outlined,
+                        ),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black87,
+                        ),
+                        validator: (value) =>
+                            value == null || value.trim().isEmpty
+                            ? 'Required'
+                            : null,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: TextFormField(
+                        controller: _lastNameController,
+                        decoration: _buildInputDecoration(
+                          'Last Name',
+                          Icons.badge_outlined,
+                        ),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black87,
+                        ),
+                        validator: (value) =>
+                            value == null || value.trim().isEmpty
+                            ? 'Required'
+                            : null,
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 16),
-
-                // 📝 ၃။ Last Name Field
-                TextFormField(
-                  controller: _lastNameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Last Name',
-                    prefixIcon: Icon(Icons.badge_outlined),
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) => value == null || value.trim().isEmpty
-                      ? 'Last Name must be filled'
-                      : null,
-                ),
-                const SizedBox(height: 16),
-
-                // 📝 ၄။ Gender Field
                 TextFormField(
                   controller: _genderController,
-                  decoration: const InputDecoration(
-                    labelText: 'Gender',
-                    prefixIcon: Icon(Icons.wc_outlined),
-                    border: OutlineInputBorder(),
+                  decoration: _buildInputDecoration(
+                    'Gender',
+                    Icons.wc_outlined,
                   ),
-                  validator: (value) => value == null || value.trim().isEmpty
-                      ? 'Gender must be filled'
-                      : null,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black87,
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter your gender';
+                    }
+                    return null;
+                  },
                 ),
                 const SizedBox(height: 16),
-
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(
-                    labelText: 'Email Address',
-                    prefixIcon: Icon(Icons.email_outlined),
-                    border: OutlineInputBorder(),
+                  decoration: _buildInputDecoration(
+                    'Email Address',
+                    Icons.email_outlined,
+                  ),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black87,
                   ),
                   validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Email must be filled';
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter your email';
                     }
-                    if (!value.contains('@')) return 'Invalid Email';
+                    if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
+                      return 'Please enter a valid email';
+                    }
                     return null;
                   },
                 ),
                 const SizedBox(height: 16),
-
                 TextFormField(
                   controller: _passwordController,
                   obscureText: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Password',
-                    prefixIcon: Icon(Icons.lock_outline),
-                    border: OutlineInputBorder(),
+                  decoration: _buildInputDecoration(
+                    'Password',
+                    Icons.lock_outline,
+                  ),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black87,
                   ),
                   validator: (value) {
-                    if (value == null || value.isEmpty) return 'Fill password';
-                    if (value.length < 6) return 'At least 6 characters';
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter your password';
+                    }
+                    if (value.length < 6) {
+                      return 'Password must be at least 6 characters';
+                    }
                     return null;
                   },
                 ),
-                const SizedBox(height: 32),
-
-                // 🚀 Register Button
-                SizedBox(
-                  height: 50,
-                  child: ElevatedButton(
-                    onPressed: authState.isLoading
-                        ? null
-                        : () {
-                            if (_formKey.currentState!.validate()) {
-                              ref
-                                  .read(authProvider.notifier)
-                                  .register(
-                                    email: _emailController.text.trim(),
-                                    password: _passwordController.text.trim(),
-                                    username: _usernameController.text.trim(),
-                                    firstName: _firstNameController.text.trim(),
-                                    lastName: _lastNameController.text.trim(),
-                                    gender: _genderController.text.trim(),
-                                    image: '',
-                                  );
-                            }
-                          },
-                    child: authState.isLoading
-                        ? const SizedBox(
-                            height: 24,
-                            width: 24,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Text(
-                            'Register',
-                            style: TextStyle(fontSize: 16),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: authState.isLoading
+                      ? null
+                      : () async {
+                          if (_formKey.currentState!.validate()) {
+                            ref
+                                .read(authProvider.notifier)
+                                .register(
+                                  email: _emailController.text.trim(),
+                                  password: _passwordController.text.trim(),
+                                  username: _usernameController.text.trim(),
+                                  firstName: _firstNameController.text.trim(),
+                                  lastName: _lastNameController.text.trim(),
+                                  gender: _genderController.text.trim(),
+                                  image: '',
+                                );
+                          }
+                        },
+                  child: authState.isLoading
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
                           ),
-                  ),
+                        )
+                      : const Text('Register'),
                 ),
                 const SizedBox(height: 16),
                 TextButton(
