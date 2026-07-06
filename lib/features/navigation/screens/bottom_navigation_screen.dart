@@ -11,11 +11,7 @@ class BottomNavigationScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedIndex = ref.watch(bottomNavIndexProvider);
-    final cartItems = ref.watch(cartProvider);
-    final totalCartCount = cartItems.fold<int>(
-      0,
-      (sum, item) => sum + item.quantity,
-    );
+    final totalCartCount = ref.watch(totalCartCountProvider);
     final List<Widget> screens = [
       const ProductsScreen(),
       const CartScreen(),

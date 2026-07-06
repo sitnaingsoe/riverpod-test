@@ -8,7 +8,6 @@ class FavoritesScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // ၁။ Async အခြေအနေကို Watch လုပ်မည်
     final favoritesAsync = ref.watch(favoritesProvider);
 
     return Scaffold(
