@@ -76,6 +76,7 @@ class _CheckoutBottomSheetState extends ConsumerState<CheckoutBottomSheet> {
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
+                      // ignore: deprecated_member_use
                       color: Colors.teal.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -115,10 +116,12 @@ class _CheckoutBottomSheetState extends ConsumerState<CheckoutBottomSheet> {
                   ),
                 ),
                 validator: (val) {
-                  if (val == null || val.isEmpty)
+                  if (val == null || val.isEmpty) {
                     return 'Please enter your phone number';
-                  if (val.length < 8 || val.length > 11)
+                  }
+                  if (val.length < 8 || val.length > 11) {
                     return 'Invalid phone number';
+                  }
                   return null;
                 },
               ),
@@ -135,7 +138,7 @@ class _CheckoutBottomSheetState extends ConsumerState<CheckoutBottomSheet> {
               ),
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
-                value: _selectedRegion,
+                initialValue: _selectedRegion,
                 hint: const Text('Select State / Region'),
                 decoration: InputDecoration(
                   prefixIcon: const Icon(Icons.map, color: Colors.teal),

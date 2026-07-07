@@ -14,7 +14,9 @@ import 'package:riverpod_test/features/auth/screens/login.dart';
 import 'package:riverpod_test/features/auth/screens/splash_screen.dart';
 import 'package:riverpod_test/features/navigation/screens/bottom_navigation_screen.dart';
 import 'package:riverpod_test/features/products/screens/product_detail_screen.dart';
+import 'package:riverpod_test/features/profile/screens/address_screen.dart';
 import 'package:riverpod_test/features/profile/screens/edit_profile_screen.dart';
+import 'package:riverpod_test/features/profile/screens/map_setup_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -68,6 +70,8 @@ class MyApp extends ConsumerWidget {
         '/history-order': (context) => const OrdersHistoryScreen(),
         '/profile-setup': (context) => const ProfileSetupScreen(),
         '/edit-profile': (context) => const EditProfileScreen(),
+        '/map-setup': (context) => const MapSetupScreen(),
+        '/address': (context) => const AddressScreen(),
       },
     );
   }
