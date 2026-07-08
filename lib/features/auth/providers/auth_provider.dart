@@ -21,6 +21,9 @@ class AuthNotifier extends AsyncNotifier<AuthModel?> {
     final authBox = Hive.box('authBox');
     final AuthModel? cachedUser = authBox.get('current_user');
     if (cachedUser != null) {
+      if (kDebugMode) {
+        print('cacheduser --> $cachedUser');
+      }
       return cachedUser;
     }
     return null;
@@ -115,31 +118,45 @@ class AuthNotifier extends AsyncNotifier<AuthModel?> {
       if (firebaseUser != null) {
         await firebaseUser.reload();
         final int intId = firebaseUser.uid.hashCode;
+
         if (kDebugMode) {
           print('✅ [AuthNotifier] Firebase User ID: ${firebaseUser.uid}');
           print('✅ [AuthNotifier] Firebase User ID (hashed): $intId');
         }
 
         final token = await firebaseUser.getIdToken();
+
+        // Firestore မှ User Data ဆွဲယူခြင်း
         final DocumentSnapshot userDoc = await FirebaseFirestore.instance
             .collection('users')
             .doc(firebaseUser.uid)
             .get();
 
-        final data = userDoc.data() as Map<String, dynamic>;
+        Map<String, dynamic> data = {};
+        if (userDoc.exists && userDoc.data() != null) {
+          data = userDoc.data() as Map<String, dynamic>;
+        }
+
         final AuthModel newUser = AuthModel(
           id: intId,
           email: firebaseUser.email ?? email,
+          // data ထဲမှာ မရှိခဲ့ရင် Default Value များ ထည့်ပေးခြင်း
           username: data['username'] ?? email.split('@')[0],
-          firstName: data['firstName'] ?? 'Jhon',
-          lastName: data['lastName'] ?? 'Smith',
-          gender: data['gender'] ?? 'unknown',
+          firstName: data['firstName'] ?? '',
+          lastName: data['lastName'] ?? '',
+          gender: data['gender'] ?? '',
           image: data['image'] ?? '',
           accessToken: token ?? '',
           refreshToken: firebaseUser.refreshToken ?? '',
         );
 
         final authBox = Hive.box('authBox');
+        final currentUser = authBox.get('current_user') as AuthModel?;
+
+        if (kDebugMode) {
+          print('current user --------------> ${currentUser?.email}');
+          print('current user ID -----------> ${currentUser?.id}');
+        }
         await authBox.put('current_user', newUser);
 
         state = AsyncValue.data(newUser);

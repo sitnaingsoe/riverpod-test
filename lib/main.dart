@@ -14,6 +14,7 @@ import 'package:riverpod_test/features/auth/screens/login.dart';
 import 'package:riverpod_test/features/auth/screens/splash_screen.dart';
 import 'package:riverpod_test/features/navigation/screens/bottom_navigation_screen.dart';
 import 'package:riverpod_test/features/products/screens/product_detail_screen.dart';
+import 'package:riverpod_test/features/profile/models/address_model.dart';
 import 'package:riverpod_test/features/profile/screens/address_screen.dart';
 import 'package:riverpod_test/features/profile/screens/edit_profile_screen.dart';
 import 'package:riverpod_test/features/profile/screens/map_setup_screen.dart';
@@ -38,7 +39,11 @@ void main() async {
   if (!Hive.isAdapterRegistered(3)) {
     Hive.registerAdapter(FavoriteModelAdapter());
   }
-
+  if (!Hive.isAdapterRegistered(4)) {
+    Hive.registerAdapter(AddressModelAdapter());
+  }
+  await Hive.openBox('orders_box');
+  await Hive.openBox('user_addresses_box');
   await Hive.openBox('user_cart_box');
   await Hive.openBox<ProductModel>('products_box');
   await Hive.openBox('user_favorites_box');

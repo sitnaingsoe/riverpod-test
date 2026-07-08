@@ -127,7 +127,6 @@ class _CheckoutBottomSheetState extends ConsumerState<CheckoutBottomSheet> {
               ),
               const SizedBox(height: 20),
 
-              // 📍 Delivery Address (Dropdown)
               const Text(
                 'Delivery Address',
                 style: TextStyle(

@@ -34,7 +34,7 @@ class CartScreen extends ConsumerWidget {
                   ),
                   SizedBox(height: 16),
                   Text(
-                    "သင့်ခြင်းတောင်းထဲမှာ ဘာမှမရှိသေးပါ",
+                    "There is nothing in your basket yet.",
                     style: TextStyle(fontSize: 16, color: Colors.grey),
                   ),
                 ],

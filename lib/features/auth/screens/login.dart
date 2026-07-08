@@ -29,10 +29,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     ref.listen<AsyncValue>(authProvider, (previous, next) {
       next.whenOrNull(
         error: (error, stackTrace) {
+          final errorString = error.toString();
+          String errorMessage = 'Login failed. Please try again.';
+
+          if (errorString.contains('user-not-found') ||
+              errorString.contains('no user record')) {
+            errorMessage = 'Account not found! Please register first.';
+          } else if (errorString.contains('wrong-password') ||
+              errorString.contains('INVALID_LOGIN_CREDENTIALS')) {
+            errorMessage = 'Incorrect password. Please try again.';
+          }
+
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Login Failed: Email or Password is incorrect.'),
-              backgroundColor: Colors.red,
+              content: Text(errorMessage),
+              backgroundColor: Colors.red.shade600,
+              behavior: SnackBarBehavior.floating,
             ),
           );
         },
@@ -41,7 +53,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             Navigator.pushReplacementNamed(context, '/home');
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('Login Success! Welcome to the My App.'),
+                content: Text('Login Success!'),
                 backgroundColor: Colors.green,
               ),
             );

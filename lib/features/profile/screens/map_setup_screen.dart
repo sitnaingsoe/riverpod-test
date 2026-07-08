@@ -302,6 +302,14 @@ class _MapSetupScreenState extends ConsumerState<MapSetupScreen> {
 
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(24),
+          topRight: Radius.circular(24),
+        ),
+      ),
       builder: (context) => Padding(
         padding: EdgeInsets.only(
           top: 20,
@@ -313,6 +321,7 @@ class _MapSetupScreenState extends ConsumerState<MapSetupScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // ဘားတန်းအသေးလေး
             Center(
               child: Container(
                 width: 40,
@@ -348,8 +357,10 @@ class _MapSetupScreenState extends ConsumerState<MapSetupScreen> {
               ),
             ),
             const SizedBox(height: 16),
+
             TextField(
               controller: detailController,
+              autofocus: true,
               decoration: InputDecoration(
                 labelText: 'Building / Apartment / Street No. (Required)',
                 hintText: 'e.g., No. 42, 3rd Floor, Room B',
@@ -363,6 +374,7 @@ class _MapSetupScreenState extends ConsumerState<MapSetupScreen> {
               ),
             ),
             const SizedBox(height: 16),
+
             TextField(
               controller: labelController,
               decoration: InputDecoration(
@@ -377,6 +389,7 @@ class _MapSetupScreenState extends ConsumerState<MapSetupScreen> {
               ),
             ),
             const SizedBox(height: 24),
+
             SizedBox(
               width: double.infinity,
               height: 50,
@@ -392,15 +405,17 @@ class _MapSetupScreenState extends ConsumerState<MapSetupScreen> {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text(
-                          'Please fill in your building or street details!',
+                          '⚠️ Please fill in your building or street details!',
                         ),
                         backgroundColor: Colors.orange,
                       ),
                     );
                     return;
                   }
+
                   final fullCombinedAddress =
                       "${detailController.text.trim()}, $googleAddress";
+
                   final newAddress = AddressModel(
                     id: DateTime.now().millisecondsSinceEpoch.toString(),
                     label: labelController.text.trim(),
@@ -409,9 +424,12 @@ class _MapSetupScreenState extends ConsumerState<MapSetupScreen> {
                     longitude: latLng.longitude,
                     isDefault: false,
                   );
+
                   ref.read(addressProvider.notifier).addAddress(newAddress);
+
                   Navigator.pop(context);
                   Navigator.pop(context);
+
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('🎉 Full Address Saved Successfully!'),
