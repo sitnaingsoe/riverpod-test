@@ -205,7 +205,7 @@ class ProductGridItem extends ConsumerWidget {
                           if (isInCart) {
                             ref
                                 .read(cartProvider.notifier)
-                                .removeFromCart(product);
+                                .deleteItemFromCart(product);
 
                             ScaffoldMessenger.of(context).clearSnackBars();
                             ScaffoldMessenger.of(context).showSnackBar(
