@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
@@ -11,6 +12,7 @@ final String _kCartBoxName = 'user_cart_box';
 class CartNotifier extends AsyncNotifier<List<CartItemModel>> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   late Box _cartBox;
+  String? firebaseUid;
   String? _userId;
 
   @override
@@ -26,7 +28,7 @@ class CartNotifier extends AsyncNotifier<List<CartItemModel>> {
           if (kDebugMode) print("🎯 Shopping Cart - User ID: $_userId");
           List<CartItemModel> localCart = [];
           final dynamicList = _cartBox.get(_userId) as List<dynamic>?;
-
+          firebaseUid = FirebaseAuth.instance.currentUser?.uid;
           if (dynamicList != null) {
             localCart = dynamicList.map((item) {
               return CartItemModel.fromJson(Map<String, dynamic>.from(item));
@@ -47,7 +49,12 @@ class CartNotifier extends AsyncNotifier<List<CartItemModel>> {
   Future<void> _syncCartWithFirestoreInBackground() async {
     if (_userId == null) return;
     try {
-      final doc = await _firestore.collection('carts').doc(_userId).get();
+      final doc = await _firestore
+          .collection('users')
+          .doc(firebaseUid)
+          .collection('cart')
+          .doc('my_cart')
+          .get();
 
       if (doc.exists && doc.data() != null) {
         final data = doc.data()!;
@@ -92,10 +99,15 @@ class CartNotifier extends AsyncNotifier<List<CartItemModel>> {
       final jsonList = updatedList.map((item) => item.toJson()).toList();
       await Future.wait([
         _cartBox.put(_userId, jsonList),
-        _firestore.collection('carts').doc(_userId).set({
-          'items': jsonList,
-          'updatedAt': FieldValue.serverTimestamp(),
-        }, SetOptions(merge: true)),
+        _firestore
+            .collection('users')
+            .doc(firebaseUid)
+            .collection('cart')
+            .doc('my_cart')
+            .set({
+              'items': jsonList,
+              'updatedAt': FieldValue.serverTimestamp(),
+            }, SetOptions(merge: true)),
       ]);
     } catch (e) {
       if (kDebugMode) print("❌ Error updating Cart databases: $e");
