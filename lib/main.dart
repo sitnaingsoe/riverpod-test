@@ -6,7 +6,6 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:riverpod_test/features/auth/models/auth_model.dart';
 import 'package:riverpod_test/features/auth/screens/profile_setup_screen.dart';
 import 'package:riverpod_test/features/auth/screens/register_screen.dart';
-import 'package:riverpod_test/features/favorites/models/favorite_product_model.dart';
 import 'package:riverpod_test/features/favorites/screens/favorites_screen.dart';
 import 'package:riverpod_test/features/orders/screens/orders_history_screen.dart';
 import 'package:riverpod_test/features/products/models/product_model.dart';
@@ -35,9 +34,6 @@ void main() async {
   await Hive.initFlutter();
   if (!Hive.isAdapterRegistered(0)) {
     Hive.registerAdapter(AuthModelAdapter());
-  }
-  if (!Hive.isAdapterRegistered(3)) {
-    Hive.registerAdapter(FavoriteModelAdapter());
   }
   if (!Hive.isAdapterRegistered(4)) {
     Hive.registerAdapter(AddressModelAdapter());

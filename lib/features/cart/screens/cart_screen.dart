@@ -92,7 +92,6 @@ class CartScreen extends ConsumerWidget {
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              // 👇 Quantity တိုးရန် (true)
                               IconButton(
                                 onPressed: () =>
                                     cartNotifier.addToCart(item.product),
@@ -101,10 +100,9 @@ class CartScreen extends ConsumerWidget {
                                   color: Colors.teal,
                                 ),
                               ),
-                              // 👇 Item တစ်ခုလုံးကို Cart ထဲမှ ဖျက်ထုတ်ရန်
                               IconButton(
-                                onPressed: () =>
-                                    cartNotifier.removeFromCart(item.product),
+                                onPressed: () => cartNotifier
+                                    .deleteItemFromCart(item.product),
                                 icon: const Icon(
                                   Icons.delete_outline,
                                   color: Colors.redAccent,

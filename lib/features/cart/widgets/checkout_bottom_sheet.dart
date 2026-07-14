@@ -24,7 +24,6 @@ class _CheckoutBottomSheetState extends ConsumerState<CheckoutBottomSheet> {
 
   String? _selectedRegion;
 
-  // မြန်မာနိုင်ငံရှိ တိုင်းနှင့် ပြည်နယ်များ စာရင်း
   final List<String> _regions = [
     'Yangon',
     'Mandalay',
@@ -52,7 +51,6 @@ class _CheckoutBottomSheetState extends ConsumerState<CheckoutBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
-    // Cart Items များကို watch လုပ်ထားခြင်း
     final currentCartItems = ref.watch(cartProvider).value ?? [];
 
     return Container(
@@ -70,7 +68,6 @@ class _CheckoutBottomSheetState extends ConsumerState<CheckoutBottomSheet> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 🚚 Header Section
               Row(
                 children: [
                   Container(
@@ -91,7 +88,6 @@ class _CheckoutBottomSheetState extends ConsumerState<CheckoutBottomSheet> {
               ),
               const Divider(height: 32),
 
-              // 📞 Contact Information
               const Text(
                 'Contact Information',
                 style: TextStyle(
@@ -161,7 +157,6 @@ class _CheckoutBottomSheetState extends ConsumerState<CheckoutBottomSheet> {
               ),
               const SizedBox(height: 12),
 
-              // Detailed Address Input
               TextFormField(
                 controller: _detailedAddressController,
                 maxLines: 3,
@@ -179,7 +174,6 @@ class _CheckoutBottomSheetState extends ConsumerState<CheckoutBottomSheet> {
               ),
               const SizedBox(height: 28),
 
-              // Total Price Info
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -199,7 +193,6 @@ class _CheckoutBottomSheetState extends ConsumerState<CheckoutBottomSheet> {
               ),
               const SizedBox(height: 16),
 
-              // 🔙 🎯 Action Buttons
               Row(
                 children: [
                   Expanded(
@@ -230,13 +223,12 @@ class _CheckoutBottomSheetState extends ConsumerState<CheckoutBottomSheet> {
                         ),
                       ),
                       onPressed: currentCartItems.isEmpty
-                          ? null // Cart ထဲဘာမှမရှိရင် ခလုတ်နှိပ်မရအောင် တားဆီးခြင်း
+                          ? null
                           : () async {
                               if (_formKey.currentState?.validate() ?? false) {
                                 final fullAddress =
                                     "$_selectedRegion, ${_detailedAddressController.text}";
 
-                                // 🚀 ၁။ Order တင်ခြင်း
                                 ref
                                     .read(ordersProvider.notifier)
                                     .placeOrder(
@@ -246,15 +238,12 @@ class _CheckoutBottomSheetState extends ConsumerState<CheckoutBottomSheet> {
                                       phone: _phoneController.text,
                                     );
 
-                                // 🚀 ၂။ Cart ကို ရှင်းလင်းခြင်း
                                 await ref
                                     .read(cartProvider.notifier)
                                     .clearCart();
 
                                 if (context.mounted) {
-                                  Navigator.pop(
-                                    context,
-                                  ); // Bottom sheet ကို ပိတ်မယ်
+                                  Navigator.pop(context);
 
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(

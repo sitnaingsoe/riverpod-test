@@ -1,4 +1,7 @@
+// ignore_for_file: unused_field
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
@@ -10,7 +13,7 @@ const String kFavoritesBoxName = 'user_favorites_box';
 class FavoritesNotifier extends AsyncNotifier<List<ProductModel>> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   late Box _favoriteBox;
-
+  late String? _firebaseUid;
   String? _userId;
 
   @override
@@ -26,6 +29,7 @@ class FavoritesNotifier extends AsyncNotifier<List<ProductModel>> {
           if (kDebugMode) {
             print("🎯 Current Login User ID is: $_userId");
           }
+          _firebaseUid = FirebaseAuth.instance.currentUser?.uid;
           List<ProductModel> localFavorites = [];
 
           final List<dynamic> dyanmicList =
@@ -72,43 +76,28 @@ class FavoritesNotifier extends AsyncNotifier<List<ProductModel>> {
     final previousState = state;
     state = AsyncData(updatedList);
     try {
-      await Future.wait([
-        _favoriteBox.put(_userId, updatedJsonList),
-        _firestore.collection('favorites').doc(_userId).set({
-          'items': updatedJsonList,
-          'updatedAt': FieldValue.serverTimestamp(),
-        }, SetOptions(merge: true)),
-      ]);
+      final firestoreTask = isExist
+          ? _firestore
+                .collection('users')
+                .doc(_firebaseUid)
+                .collection('favorites')
+                .doc(product.id.toString())
+                .delete()
+          : _firestore
+                .collection('users')
+                .doc(_firebaseUid)
+                .collection('favorites')
+                .doc(product.id.toString())
+                .set(product.toJson());
+      await Future.wait(
+        [_favoriteBox.put(_userId, updatedJsonList), firestoreTask]
+            as Iterable<Future<dynamic>>,
+      );
     } catch (e) {
       if (kDebugMode) print("❌ Error updating storage databases: $e");
       state = previousState;
       await _favoriteBox.put(_userId, previousJsonList);
     }
-    // final isExist = currentList.any((item) => item.id == product.id);
-    // List<ProductModel> updatedList;
-
-    // if (isExist) {
-    //   updatedList = currentList.where((item) => item.id != product.id).toList();
-    // } else {
-    //   updatedList = [...currentList, product];
-    // }
-    // final previousState = state;
-    // state = AsyncData(updatedList);
-    // try {
-    //   final jsonList = updatedList.map((item) => item.toJson()).toList();
-    //   await _favoriteBox.put(_userId, jsonList);
-    //   await _firestore.collection('favorites').doc(_userId).set({
-    //     'items': jsonList,
-    //     'updatedAt': FieldValue.serverTimestamp(),
-    //   }, SetOptions(merge: true));
-    // } catch (e) {
-    //   if (kDebugMode) print("❌ Error updating Firestore database: $e");
-    //   state = previousState;
-    //   final rollbackJsonList = (previousState.value ?? [])
-    //       .map((item) => item.toJson())
-    //       .toList();
-    //   await _favoriteBox.put(_userId, rollbackJsonList);
-    // }
   }
 
   bool isFavorite(int productId) {
@@ -119,20 +108,23 @@ class FavoritesNotifier extends AsyncNotifier<List<ProductModel>> {
   Future<void> _syncWithFirestoreInBackground() async {
     if (_userId == null) return;
     try {
-      final doc = await _firestore.collection('favorites').doc(_userId).get();
+      final snapshot = await _firestore
+          .collection('users')
+          .doc(_firebaseUid)
+          .collection('favorites')
+          .get();
 
-      if (doc.exists && doc.data() != null) {
-        final data = doc.data()!;
-        final List<dynamic>? items = data['items'] ?? [];
-        if (items != null) {
-          final cloudFavorites = items.map((item) {
-            return ProductModel.fromJson(Map<String, dynamic>.from(item));
-          }).toList();
+      if (snapshot.docs.isNotEmpty) {
+        final cloudFavorites = snapshot.docs.map((doc) {
+          return ProductModel.fromJson(doc.data());
+        }).toList();
+        final jsonList = cloudFavorites.map((item) => item.toJson()).toList();
 
-          final jsonList = cloudFavorites.map((item) => item.toJson()).toList();
-          await _favoriteBox.put(_userId, jsonList);
-          state = AsyncData(cloudFavorites);
-        }
+        await _favoriteBox.put(_userId, jsonList);
+        state = AsyncData(cloudFavorites);
+      } else {
+        await _favoriteBox.put(_userId, []);
+        state = const AsyncData([]);
       }
     } catch (e) {
       if (kDebugMode) {
