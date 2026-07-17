@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import 'package:riverpod_test/features/auth/providers/auth_provider.dart'; // သင့် AuthProvider လမ်းကြောင်း
@@ -25,7 +24,6 @@ class CartNotifier extends AsyncNotifier<List<CartItemModel>> {
       data: (user) {
         if (user != null) {
           _userId = user.id.toString();
-          if (kDebugMode) print("🎯 Shopping Cart - User ID: $_userId");
           List<CartItemModel> localCart = [];
           final dynamicList = _cartBox.get(_userId) as List<dynamic>?;
           firebaseUid = FirebaseAuth.instance.currentUser?.uid;
@@ -69,7 +67,7 @@ class CartNotifier extends AsyncNotifier<List<CartItemModel>> {
         state = AsyncData(cloudCart);
       }
     } catch (e) {
-      if (kDebugMode) print("☁️ Cart Firestore Sync Error: $e");
+      e.toString();
     }
   }
 
@@ -110,7 +108,6 @@ class CartNotifier extends AsyncNotifier<List<CartItemModel>> {
             }, SetOptions(merge: true)),
       ]);
     } catch (e) {
-      if (kDebugMode) print("❌ Error updating Cart databases: $e");
       state = previousState;
       final rollbackJsonList = (previousState.value ?? [])
           .map((item) => item.toJson())
@@ -155,7 +152,6 @@ class CartNotifier extends AsyncNotifier<List<CartItemModel>> {
     if (_userId == null) return;
 
     await _updateCartStorage([]);
-    if (kDebugMode) print("🛒 Cart cleared successfully after checkout.");
   }
 }
 

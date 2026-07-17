@@ -1,5 +1,4 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_test/features/auth/providers/auth_provider.dart';
 import 'package:riverpod_test/features/cart/models/cart_item_model.dart';
@@ -59,14 +58,9 @@ class OrdersNotifier extends Notifier<List<OrderModel>> {
       if (cloudOrders.isNotEmpty) {
         await _service.saveOrdersToHive(_hiveUserId!, cloudOrders);
         state = cloudOrders;
-        if (kDebugMode) {
-          print(
-            '☁️ Orders synced from Firestore: ${cloudOrders.length} orders',
-          );
-        }
       }
     } catch (e) {
-      if (kDebugMode) print('❌ Orders Firestore sync failed: $e');
+      e.toString();
     }
   }
 
@@ -98,7 +92,7 @@ class OrdersNotifier extends Notifier<List<OrderModel>> {
       try {
         await _service.saveOrderToFirestore(_firebaseUid!, newOrder);
       } catch (e) {
-        if (kDebugMode) print('❌ Firestore order save failed: $e');
+        e.toString();
       }
     }
   }

@@ -1,9 +1,5 @@
-import 'dart:convert';
 import 'dart:developer' as developer;
-
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:crypto/crypto.dart';
-import 'package:flutter/foundation.dart';
 import 'package:hive/hive.dart';
 import 'package:riverpod_test/features/auth/models/auth_model.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -21,9 +17,6 @@ class AuthNotifier extends AsyncNotifier<AuthModel?> {
     final authBox = Hive.box('authBox');
     final AuthModel? cachedUser = authBox.get('current_user');
     if (cachedUser != null) {
-      if (kDebugMode) {
-        print('cacheduser --> $cachedUser');
-      }
       return cachedUser;
     }
     return null;
@@ -63,9 +56,7 @@ class AuthNotifier extends AsyncNotifier<AuthModel?> {
               'createdAt': FieldValue.serverTimestamp(),
             });
         final token = await firebaseUser.getIdToken();
-        if (kDebugMode) {
-          print('Token: $token');
-        }
+
         final newUser = AuthModel(
           id: firebaseUser.uid.hashCode,
           email: firebaseUser.email ?? '',
@@ -96,6 +87,11 @@ class AuthNotifier extends AsyncNotifier<AuthModel?> {
         msg = ' This email account has already been opened.';
       } else if (e.code == 'weak-password') {
         msg = '🔑 The password must be at least 6 characters long.';
+      } else if (e.code == 'network-request-failed') {
+        state = AsyncError(
+          'No internet connection. Please check your network and try again.',
+          StackTrace.current,
+        );
       }
 
       state = AsyncValue.error(msg, StackTrace.current);
@@ -103,6 +99,29 @@ class AuthNotifier extends AsyncNotifier<AuthModel?> {
     } catch (error, stackTrace) {
       state = AsyncValue.error(error, stackTrace);
       rethrow;
+    }
+  }
+
+  Future<bool> checkEmailExists(String email, String password) async {
+    try {
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      return true;
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'network-request-failed') {
+        throw 'No internet connection. Please check your network and try again.';
+      }
+
+      if (e.code == 'user-not-found') {
+        return false;
+      } else if (e.code == 'wrong-password' || e.code == 'invalid-credential') {
+        return true;
+      }
+      return true;
+    } catch (e) {
+      return true;
     }
   }
 
@@ -119,14 +138,8 @@ class AuthNotifier extends AsyncNotifier<AuthModel?> {
         await firebaseUser.reload();
         final int intId = firebaseUser.uid.hashCode;
 
-        if (kDebugMode) {
-          print('✅ [AuthNotifier] Firebase User ID: ${firebaseUser.uid}');
-          print('✅ [AuthNotifier] Firebase User ID (hashed): $intId');
-        }
-
         final token = await firebaseUser.getIdToken();
 
-        // Firestore မှ User Data ဆွဲယူခြင်း
         final DocumentSnapshot userDoc = await FirebaseFirestore.instance
             .collection('users')
             .doc(firebaseUser.uid)
@@ -140,7 +153,6 @@ class AuthNotifier extends AsyncNotifier<AuthModel?> {
         final AuthModel newUser = AuthModel(
           id: intId,
           email: firebaseUser.email ?? email,
-          // data ထဲမှာ မရှိခဲ့ရင် Default Value များ ထည့်ပေးခြင်း
           username: data['username'] ?? email.split('@')[0],
           firstName: data['firstName'] ?? '',
           lastName: data['lastName'] ?? '',
@@ -151,12 +163,7 @@ class AuthNotifier extends AsyncNotifier<AuthModel?> {
         );
 
         final authBox = Hive.box('authBox');
-        final currentUser = authBox.get('current_user') as AuthModel?;
 
-        if (kDebugMode) {
-          print('current user --------------> ${currentUser?.email}');
-          print('current user ID -----------> ${currentUser?.id}');
-        }
         await authBox.put('current_user', newUser);
 
         state = AsyncValue.data(newUser);
@@ -207,12 +214,6 @@ final firebaseAuthProvider = Provider<FirebaseAuth>(
   (ref) => FirebaseAuth.instance,
 );
 
-String getGravatarUrl(String email) {
-  final cleanedEmail = email.trim().toLowerCase();
-
-  final bytes = utf8.encode(cleanedEmail);
-
-  final hash = md5.convert(bytes).toString();
-
-  return 'https://www.gravatar.com/avatar/$hash?s=200&d=identicon';
-}
+final tempRegisterProvider = StateProvider<Map<String, dynamic>?>((ref) {
+  return null;
+});

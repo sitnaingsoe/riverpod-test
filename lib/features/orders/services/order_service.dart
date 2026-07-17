@@ -1,5 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart';
 import 'package:hive/hive.dart';
 import 'package:riverpod_test/features/orders/models/order_model.dart';
 
@@ -21,7 +20,6 @@ class OrderService {
           )
           .toList();
     } catch (e) {
-      if (kDebugMode) print('❌ OrderService.loadOrdersFromHive error: $e');
       return [];
     }
   }
@@ -31,7 +29,7 @@ class OrderService {
       final jsonList = orders.map((o) => o.toJson()).toList();
       await _box.put('user_$userId', jsonList);
     } catch (e) {
-      if (kDebugMode) print('❌ OrderService.saveOrdersToHive error: $e');
+      e.toString();
     }
   }
 
@@ -43,9 +41,7 @@ class OrderService {
           .collection('orders')
           .doc(order.id)
           .set(order.toJson());
-      if (kDebugMode) print('☁️ Order ${order.id} saved to Firestore.');
     } catch (e) {
-      if (kDebugMode) print('❌ OrderService.saveOrderToFirestore error: $e');
       rethrow;
     }
   }
@@ -63,7 +59,6 @@ class OrderService {
           .map((doc) => OrderModel.fromJson(doc.data()))
           .toList();
     } catch (e) {
-      if (kDebugMode) print('❌ OrderService.syncOrdersFromFirestore error: $e');
       return [];
     }
   }

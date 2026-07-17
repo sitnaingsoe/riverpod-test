@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_test/features/auth/providers/auth_provider.dart';
@@ -141,9 +140,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               .read(authProvider.notifier)
                               .login(email, password);
                         } catch (e) {
-                          if (kDebugMode) {
-                            print('Login failed: $e');
-                          }
+                          e.toString();
                         }
                       }
                     },

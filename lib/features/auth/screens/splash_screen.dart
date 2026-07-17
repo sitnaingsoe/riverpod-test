@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_test/features/auth/services/auth_service.dart';
@@ -45,9 +44,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     final bool isAuthenticated = await _authService.checkAndRefreshAuth();
 
     if (!mounted || !context.mounted) return;
-    if (kDebugMode) {
-      print('Authentication status: $isAuthenticated');
-    }
+
     if (isAuthenticated) {
       Navigator.pushReplacementNamed(context, '/home');
     } else {
@@ -117,14 +114,12 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                 ),
               ),
 
-              // 💡 UX Improvement: မျက်နှာပြင်အောက်ခြေမှာ သပ်သပ်ရပ်ရပ် Loading စာသားနဲ့ Brand နာမည်ပြမယ့်အပိုင်း
               Positioned(
                 bottom: 40,
                 left: 0,
                 right: 0,
                 child: Column(
                   children: [
-                    // သေးသေးသွယ်သွယ် Linear Loading Bar လေး (စက်ဝိုင်းကြီး လည်နေတာထက် ပိုကြည့်ကောင်းပါတယ်)
                     SizedBox(
                       width: 120,
                       child: LinearProgressIndicator(

@@ -2,7 +2,6 @@
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import 'package:riverpod_test/features/auth/providers/auth_provider.dart';
@@ -26,9 +25,7 @@ class FavoritesNotifier extends AsyncNotifier<List<ProductModel>> {
       data: (user) async {
         if (user != null) {
           _userId = user.id.toString();
-          if (kDebugMode) {
-            print("🎯 Current Login User ID is: $_userId");
-          }
+
           _firebaseUid = FirebaseAuth.instance.currentUser?.uid;
           List<ProductModel> localFavorites = [];
 
@@ -43,9 +40,6 @@ class FavoritesNotifier extends AsyncNotifier<List<ProductModel>> {
           _syncWithFirestoreInBackground();
           return localFavorites;
         } else {
-          if (kDebugMode) {
-            print("👤 User is NULL inside FavoritesNotifier!");
-          }
           _userId = null;
         }
         return [];
@@ -94,7 +88,6 @@ class FavoritesNotifier extends AsyncNotifier<List<ProductModel>> {
             as Iterable<Future<dynamic>>,
       );
     } catch (e) {
-      if (kDebugMode) print("❌ Error updating storage databases: $e");
       state = previousState;
       await _favoriteBox.put(_userId, previousJsonList);
     }
@@ -127,9 +120,7 @@ class FavoritesNotifier extends AsyncNotifier<List<ProductModel>> {
         state = const AsyncData([]);
       }
     } catch (e) {
-      if (kDebugMode) {
-        print("☁️ Firestore Sync Error  $e");
-      }
+      e.toString();
     }
   }
 }

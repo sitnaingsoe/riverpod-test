@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:crypto/crypto.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
@@ -75,10 +74,6 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
           throw Exception(
             '❌ Error: Failed to upload image to DigitalOcean Spaces',
           );
-        } else {
-          if (kDebugMode) {
-            print('✅ Image uploaded successfully: $downloadUrl');
-          }
         }
 
         await FirebaseFirestore.instance
@@ -101,9 +96,6 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('❌ Error: $e'), backgroundColor: Colors.red),
         );
-        if (kDebugMode) {
-          print("❌ Error during profile setup: $e");
-        }
       }
     } finally {
       if (mounted) setState(() => isLoading = false);
@@ -118,6 +110,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         backgroundColor: Colors.white,
         elevation: 0,
         actions: [

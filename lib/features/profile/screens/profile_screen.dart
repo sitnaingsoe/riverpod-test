@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_test/features/auth/providers/auth_provider.dart';
@@ -420,11 +419,7 @@ class ProfileScreen extends ConsumerWidget {
                                         );
                                       }
                                     } catch (e) {
-                                      if (kDebugMode) {
-                                        print(
-                                          "❌ Logout လုပ်ရတာ အဆင်မပြေပါ: $e",
-                                        );
-                                      }
+                                      e.toString();
                                     }
                                   },
                                   child: const Text('Logout'),
