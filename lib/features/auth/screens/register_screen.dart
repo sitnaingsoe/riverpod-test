@@ -7,9 +7,7 @@ import 'package:riverpod_test/features/auth/providers/otp_provider.dart';
 import 'package:riverpod_test/features/auth/services/notification_service.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
-  const RegisterScreen({
-    super.key,
-  }); // 💡 Typo 'RegisterScreeen' ကို ပြင်ဆင်ထားပါသည်
+  const RegisterScreen({super.key});
   @override
   ConsumerState<RegisterScreen> createState() => _RegisterScreenState();
 }
@@ -83,17 +81,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               backgroundColor: Colors.red,
             ),
           );
-        },
-        data: (user) {
-          if (user != null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text(' Successful Account Created! '),
-                behavior: SnackBarBehavior.floating,
-                backgroundColor: Colors.green,
-              ),
-            );
-          }
         },
       );
     });

@@ -1,6 +1,6 @@
-
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_test/features/products/models/product_detail_model.dart';
 import 'package:riverpod_test/features/products/models/product_model.dart';
 import '../services/product_service.dart';
 
@@ -157,4 +157,10 @@ final categoriesProvider = FutureProvider<List<Map<String, String>>>((
 
 final bottomNavIndexProvider = StateProvider<int>((ref) => 0);
 
-
+final productDetailProvider = FutureProvider.family<ProductDetailModel, int>((
+  ref,
+  id,
+) async {
+  final service = ProductService();
+  return await service.fetchProductDetail(id);
+});

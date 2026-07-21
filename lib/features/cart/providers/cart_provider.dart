@@ -45,21 +45,17 @@ class CartNotifier extends AsyncNotifier<List<CartItemModel>> {
   }
 
   Future<void> _syncCartWithFirestoreInBackground() async {
-    if (_userId == null) return;
+    if (_userId == null || firebaseUid == null) return;
     try {
-      final doc = await _firestore
+      final querySnapshot = await _firestore
           .collection('users')
           .doc(firebaseUid)
           .collection('cart')
-          .doc('my_cart')
           .get();
 
-      if (doc.exists && doc.data() != null) {
-        final data = doc.data()!;
-        final List<dynamic> items = data['items'] ?? [];
-
-        final cloudCart = items.map((item) {
-          return CartItemModel.fromJson(Map<String, dynamic>.from(item));
+      if (querySnapshot.docs.isNotEmpty) {
+        final cloudCart = querySnapshot.docs.map((doc) {
+          return CartItemModel.fromJson(doc.data());
         }).toList();
 
         final jsonList = cloudCart.map((item) => item.toJson()).toList();
@@ -78,19 +74,19 @@ class CartNotifier extends AsyncNotifier<List<CartItemModel>> {
     final index = updatedList.indexWhere(
       (item) => item.product.id == product.id,
     );
+    late CartItemModel updatedItem;
     if (index != -1) {
       final currentItem = updatedList[index];
-      updatedList[index] = CartItemModel(
+      updatedItem = CartItemModel(
         product: currentItem.product,
         quantity: currentItem.quantity + 1,
       );
+      updatedList[index] = updatedItem;
     } else {
-      updatedList.add(CartItemModel(product: product, quantity: 1));
+      updatedItem = CartItemModel(product: product, quantity: 1);
+      updatedList.add(updatedItem);
     }
-    await _updateCartStorage(updatedList);
-  }
 
-  Future<void> _updateCartStorage(List<CartItemModel> updatedList) async {
     final previousState = state;
     state = AsyncData(updatedList);
     try {
@@ -101,11 +97,8 @@ class CartNotifier extends AsyncNotifier<List<CartItemModel>> {
             .collection('users')
             .doc(firebaseUid)
             .collection('cart')
-            .doc('my_cart')
-            .set({
-              'items': jsonList,
-              'updatedAt': FieldValue.serverTimestamp(),
-            }, SetOptions(merge: true)),
+            .doc(product.id.toString())
+            .set(updatedItem.toJson(), SetOptions(merge: true)),
       ]);
     } catch (e) {
       state = previousState;
@@ -117,7 +110,7 @@ class CartNotifier extends AsyncNotifier<List<CartItemModel>> {
   }
 
   void removeFromCart(ProductModel product) async {
-    if (_userId == null) return;
+    if (_userId == null || firebaseUid == null) return;
     final currentList = state.value ?? [];
     List<CartItemModel> updatedList = List.from(currentList);
     final index = currentList.indexWhere(
@@ -126,32 +119,94 @@ class CartNotifier extends AsyncNotifier<List<CartItemModel>> {
     if (index != -1) {
       final currentItem = updatedList[index];
       if (currentItem.quantity > 1) {
-        updatedList[index] = CartItemModel(
+        final updatedItem = CartItemModel(
           product: currentItem.product,
           quantity: currentItem.quantity - 1,
         );
+        updatedList[index] = updatedItem;
+        final previousState = state;
+        state = AsyncData(updatedList);
+
+        try {
+          final jsonList = updatedList.map((item) => item.toJson()).toList();
+          await Future.wait([
+            _cartBox.put(_userId, jsonList),
+            _firestore
+                .collection('users')
+                .doc(firebaseUid)
+                .collection('cart')
+                .doc(product.id.toString()) // <-- ID ဖြင့် Update လုပ်ပါသည်
+                .set(updatedItem.toJson(), SetOptions(merge: true)),
+          ]);
+        } catch (e) {
+          state = previousState;
+          final rollbackJsonList = (previousState.value ?? [])
+              .map((item) => item.toJson())
+              .toList();
+          await _cartBox.put(_userId, rollbackJsonList);
+        }
       } else {
         updatedList.removeAt(index);
       }
-      await _updateCartStorage(updatedList);
+    } else {
+      deleteItemFromCart(product);
     }
   }
 
   void deleteItemFromCart(ProductModel product) async {
-    if (_userId == null) return;
+    if (_userId == null || firebaseUid == null) return;
 
     final currentList = state.value ?? [];
     final updatedList = currentList
         .where((item) => item.product.id != product.id)
         .toList();
 
-    await _updateCartStorage(updatedList);
+    final previousState = state;
+    state = AsyncData(updatedList);
+    try {
+      final jsonList = updatedList.map((item) => item.toJson()).toList();
+      await Future.wait([
+        _cartBox.put(_userId, jsonList),
+        _firestore
+            .collection('users')
+            .doc(firebaseUid)
+            .collection('cart')
+            .doc(product.id.toString())
+            .delete(),
+      ]);
+    } catch (e) {
+      state = previousState;
+      final rollbackJsonList = (previousState.value ?? [])
+          .map((item) => item.toJson())
+          .toList();
+      await _cartBox.put(_userId, rollbackJsonList);
+    }
   }
 
   Future<void> clearCart() async {
-    if (_userId == null) return;
+    if (_userId == null || firebaseUid == null) return;
+    final previousState = state;
+    state = const AsyncData([]);
+    try {
+      await _cartBox.put(_userId, []);
+      final snapshots = await _firestore
+          .collection('users')
+          .doc(firebaseUid)
+          .collection('cart')
+          .get();
 
-    await _updateCartStorage([]);
+      final batch = _firestore.batch();
+      for (var doc in snapshots.docs) {
+        batch.delete(doc.reference);
+      }
+      await batch.commit();
+    } catch (e) {
+      state = previousState;
+      final rollbackJsonList = (previousState.value ?? [])
+          .map((item) => item.toJson())
+          .toList();
+      await _cartBox.put(_userId, rollbackJsonList);
+    }
   }
 }
 

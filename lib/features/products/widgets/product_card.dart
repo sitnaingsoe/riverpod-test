@@ -1,9 +1,12 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_test/features/cart/providers/cart_provider.dart';
 import 'package:riverpod_test/features/favorites/providers/favorites_provider.dart';
 import 'package:riverpod_test/features/products/models/product_model.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 class ProductGridItem extends ConsumerWidget {
   final ProductModel product;
@@ -88,7 +91,25 @@ class ProductGridItem extends ConsumerWidget {
                         ],
                       ),
                       child: IconButton(
-                        onPressed: () {
+                        onPressed: () async {
+                          final connectivityResults = await Connectivity()
+                              .checkConnectivity();
+                          if (connectivityResults.contains(
+                            ConnectivityResult.none,
+                          )) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).clearSnackBars();
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: const Text(
+                                    '🌐 No internet connection!',
+                                  ),
+                                  backgroundColor: Colors.redAccent.shade100,
+                                ),
+                              );
+                            }
+                            return;
+                          }
                           ref
                               .read(favoritesProvider.notifier)
                               .toggleFavorite(product);
@@ -201,7 +222,25 @@ class ProductGridItem extends ConsumerWidget {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        onPressed: () {
+                        onPressed: () async {
+                          final connectivityResults = await Connectivity()
+                              .checkConnectivity();
+                          if (connectivityResults.contains(
+                            ConnectivityResult.none,
+                          )) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).clearSnackBars();
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: const Text(
+                                    '🌐 No internet connection!',
+                                  ),
+                                  backgroundColor: Colors.redAccent.shade100,
+                                ),
+                              );
+                            }
+                            return;
+                          }
                           if (isInCart) {
                             ref
                                 .read(cartProvider.notifier)

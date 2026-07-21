@@ -40,8 +40,15 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   Future<void> _checkAuth() async {
     await Future.delayed(const Duration(seconds: 3));
     if (!mounted || !context.mounted) return;
+    bool isAuthenticated = false;
 
-    final bool isAuthenticated = await _authService.checkAndRefreshAuth();
+    try {
+      isAuthenticated = await _authService.checkAndRefreshAuth().timeout(
+        const Duration(seconds: 5),
+      );
+    } catch (e) {
+      debugPrint("Offline or Auth check timed out: $e");
+    }
 
     if (!mounted || !context.mounted) return;
 
@@ -89,9 +96,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                         ),
                       ),
                       const SizedBox(height: 24),
-                      // App နာမည်ကို စမတ်ကျကျ ဒီဇိုင်းထုတ်ထားတာပါ
                       const Text(
-                        'MY DIGITAL STORE',
+                        'MY  Shop',
                         style: TextStyle(
                           fontSize: 26,
                           fontWeight: FontWeight.bold,

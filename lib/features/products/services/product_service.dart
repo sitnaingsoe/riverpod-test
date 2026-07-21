@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 import 'package:http/http.dart' as http;
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
+import 'package:riverpod_test/features/products/models/product_detail_model.dart';
 import 'package:riverpod_test/features/products/models/product_model.dart';
 
 class ProductService {
@@ -106,10 +107,7 @@ class ProductService {
         },
       );
       if (response.statusCode == 200) {
-        return await compute(
-          _parseProducts,
-          response.data,
-        ); // 💡 compute integration
+        return await compute(_parseProducts, response.data);
       }
       throw Exception('Fail to load products by category');
     } catch (e) {
@@ -148,5 +146,19 @@ class ProductService {
       return List<int>.from(data['recommendations']);
     }
     return [];
+  }
+
+  Future<ProductDetailModel> fetchProductDetail(int productId) async {
+    try {
+      final response = await _dio.get(
+        'https://dummyjson.com/products/$productId',
+      );
+      if (response.statusCode == 200) {
+        return ProductDetailModel.fromJson(response.data);
+      }
+      throw Exception('Failed to load product details');
+    } catch (e) {
+      throw Exception('Error fetching details: $e');
+    }
   }
 }

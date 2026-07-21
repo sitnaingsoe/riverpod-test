@@ -40,6 +40,7 @@ void main() async {
   await Hive.openBox<ProductModel>('products_box');
   await Hive.openBox('user_favorites_box');
   await Hive.openBox('authBox');
+  await Hive.openBox('offline_tasks_queue');
 
   runApp(const ProviderScope(child: MyApp()));
 }
@@ -51,7 +52,6 @@ class MyApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return MaterialApp(
       title: 'My Store',
-      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),
         useMaterial3: true,

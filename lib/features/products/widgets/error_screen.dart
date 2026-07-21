@@ -34,7 +34,6 @@ class ErrorPlaceholder extends StatelessWidget {
             ),
             const SizedBox(height: 8),
 
-            // ၃။ Dynamically ပြသမည့် Error Message
             Text(
               errorMessage,
               textAlign: TextAlign.center,
@@ -56,7 +55,7 @@ class ErrorPlaceholder extends StatelessWidget {
                 ),
               ),
               onPressed:
-                  onTryAgain, // လက်ခံရရှိမည့် function ကို ပြန်ပတ်ပေးခြင်း
+                  onTryAgain,
               icon: const Icon(Icons.refresh_rounded),
               label: const Text(
                 'Try Again',
