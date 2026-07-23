@@ -7,6 +7,7 @@ import 'package:riverpod_test/features/cart/providers/cart_provider.dart';
 import 'package:riverpod_test/features/favorites/providers/favorites_provider.dart';
 import 'package:riverpod_test/features/products/models/product_model.dart';
 import 'package:riverpod_test/features/products/providers/product_provider.dart';
+import 'package:riverpod_test/features/products/widgets/error_screen.dart';
 //import 'package:riverpod_test/features/products/providers/recommendation_notifier.dart';
 
 class ProductDetailScreen extends ConsumerWidget {
@@ -45,19 +46,15 @@ class ProductDetailScreen extends ConsumerWidget {
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
       ),
-      // 🚀 3. detailAsync ဖြင့် when() ကိုသုံး၍ UI တစ်ခုလုံးကို အုပ်ပေးခြင်း
       body: detailAsync.when(
         loading: () =>
             const Center(child: CircularProgressIndicator(color: Colors.teal)),
-        error: (err, stack) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Text(
-              'Failed to load product details: $err',
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.redAccent, fontSize: 16),
-            ),
-          ),
+        error: (err, stack) => ErrorPlaceholder(
+          errorMessage:
+              'Failed to load  product , Please check your connection',
+          onTryAgain: () {
+            ref.invalidate(productDetailProvider(productId));
+          },
         ),
         data: (product) {
           final isInCart = (ref.watch(cartProvider).value ?? []).any(
@@ -74,13 +71,15 @@ class ProductDetailScreen extends ConsumerWidget {
                     // ၁။ Product Image Box
                     Container(
                       width: double.infinity,
-                      height: 195,
-                      color: Colors.grey[100],
+                      height: MediaQuery.of(context).size.height * 0.25,
+                      color: Colors.white,
                       child: CachedNetworkImage(
                         imageUrl: product.images.isNotEmpty
                             ? product.images.first
                             : "https://via.placeholder.com/300",
-                        fit: BoxFit.cover,
+
+                        fit: BoxFit.contain,
+
                         placeholder: (context, url) => const Center(
                           child: CircularProgressIndicator(color: Colors.teal),
                         ),

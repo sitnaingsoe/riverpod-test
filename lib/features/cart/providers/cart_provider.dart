@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import 'package:riverpod_test/features/auth/providers/auth_provider.dart'; // သင့် AuthProvider လမ်းကြောင်း
@@ -77,6 +78,15 @@ class CartNotifier extends AsyncNotifier<List<CartItemModel>> {
     late CartItemModel updatedItem;
     if (index != -1) {
       final currentItem = updatedList[index];
+
+      if (currentItem.quantity >= product.stock) {
+        return;
+      }
+      if (kDebugMode) {
+        print(
+          '\x1B[32m#################### Stock ########################### ${product.stock}\x1B[0m',
+        );
+      }
       updatedItem = CartItemModel(
         product: currentItem.product,
         quantity: currentItem.quantity + 1,
@@ -135,7 +145,7 @@ class CartNotifier extends AsyncNotifier<List<CartItemModel>> {
                 .collection('users')
                 .doc(firebaseUid)
                 .collection('cart')
-                .doc(product.id.toString()) // <-- ID ဖြင့် Update လုပ်ပါသည်
+                .doc(product.id.toString())
                 .set(updatedItem.toJson(), SetOptions(merge: true)),
           ]);
         } catch (e) {

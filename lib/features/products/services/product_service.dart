@@ -41,7 +41,7 @@ class ProductService {
   }
 
   final String _productFields =
-      'id,title,price,description,category,rating,thumbnail';
+      'id,title,price,description,category,rating,thumbnail,stock,discountPercentage';
 
   Future<List<ProductModel>> fetchProducts({
     required int limit,

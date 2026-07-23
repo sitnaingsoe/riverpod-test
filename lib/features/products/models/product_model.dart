@@ -23,9 +23,14 @@ class ProductModel extends HiveObject {
   @HiveField(5)
   final double rating;
 
+  @HiveField(7)
+  final int stock;
+
   @HiveField(6)
   final String thumbnail;
 
+  @HiveField(9)
+  final double discountPercentage;
   // Fixed the constructor name to match the class
   ProductModel({
     required this.id,
@@ -35,18 +40,21 @@ class ProductModel extends HiveObject {
     required this.category,
     required this.rating,
     required this.thumbnail,
+    this.stock = 0,
+    this.discountPercentage = 0.0,
   });
 
   factory ProductModel.fromJson(Map<String, dynamic> map) {
     return ProductModel(
       id: map['id']?.toInt() ?? 0,
       title: map['title'] ?? '',
-      // price က int ရော double ရော လာနိုင်လို့ .toDouble() ခံပေးတာ စိတ်ချရဆုံးပါ
       price: (map['price'] ?? 0.0).toDouble(),
       rating: (map['rating'] ?? 0.0).toDouble(),
       thumbnail: map['thumbnail'] ?? '',
       category: map['category'] ?? '',
       description: map['description'] ?? '',
+      stock: map['stock']?.toInt() ?? 0,
+      discountPercentage: (map['discountPercentage'] ?? 0.0).toDouble(),
     );
   }
 
@@ -59,6 +67,8 @@ class ProductModel extends HiveObject {
       'category': category,
       'rating': rating,
       'thumbnail': thumbnail,
+      'stock': stock,
+      'discountPercentage': discountPercentage,
     };
   }
 }

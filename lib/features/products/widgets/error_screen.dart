@@ -25,7 +25,7 @@ class ErrorPlaceholder extends StatelessWidget {
 
             // ၂။ Error Title
             const Text(
-              'Oops! Something went wrong',
+              'No Internet Connection',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -41,7 +41,6 @@ class ErrorPlaceholder extends StatelessWidget {
             ),
             const SizedBox(height: 24),
 
-            // ၄။ Try Again Button
             ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.teal,
@@ -54,8 +53,7 @@ class ErrorPlaceholder extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
-              onPressed:
-                  onTryAgain,
+              onPressed: onTryAgain,
               icon: const Icon(Icons.refresh_rounded),
               label: const Text(
                 'Try Again',
